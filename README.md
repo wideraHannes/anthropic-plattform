@@ -19,17 +19,16 @@ Clean, correct knowledge + a playground for building **Claude into products**: a
 | [03](concepts/03_tool_design/)               | Tool design             | Tools are the agent's UI: descriptions, schemas, structured errors.    |
 | [04](concepts/04_workflows_and_multi_agent/) | Workflows & multi-agent | Chaining, routing, parallel, orchestrator–workers, hub-and-spoke.      |
 | [05](concepts/05_guardrails_and_hooks/)      | Guardrails & hooks      | Determinism ladder: prompt → schema → gate → hook → human.             |
-| [06](concepts/06_context_engineering/)       | Context engineering     | Smallest high-signal context; compaction, memory, subagents.           |
-| [07](concepts/07_evals/)                     | Evals                   | Dataset + grader + number. Outcomes _and_ trajectories.                |
-| [08](concepts/08_inference_optimization/)    | Inference optimization  | Caching, batch, effort, model choice, per completed task.              |
+| [06](concepts/06_evals/)                     | Evals                   | Dataset + grader + number. Outcomes _and_ trajectories.                |
+| [07](concepts/07_inference_optimization/)    | Inference optimization  | Caching, batch, effort, model choice, per completed task.              |
 
 ## Projects
 
 | #                                       | Project                                                   | Pattern                                                                            | Concepts          |
 | --------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------- | ----------------- |
-| [01](projects/01_ticket_routing/)       | Ticket routing                                            | Routing workflow, structured output                                                | 04 · 07 · 08      |
-| [02](projects/02_support_agent/)        | Customer support agent (**reusable starter**)             | Single agent + gated tools + handoff                                               | 02 · 03 · 05 · 07 |
-| [03](projects/03_research_multi_agent/) | Multi-agent research                                      | Orchestrator–workers, parallel, cited synthesis                                    | 04 · 06 · 07      |
+| [01](projects/01_ticket_routing/)       | Ticket routing                                            | Routing workflow, structured output                                                | 04 · 06 · 07      |
+| [02](projects/02_support_agent/)        | Customer support agent (**reusable starter**)             | Single agent + gated tools + handoff                                               | 02 · 03 · 05 · 06 |
+| [03](projects/03_research_multi_agent/) | Multi-agent research                                      | Orchestrator–workers, parallel, cited synthesis                                    | 04 · 06           |
 | [4D](projects/4D_framework/)            | Clinic wait time, built along the 4D AI Fluency framework | Delegation → Description → Discernment → Diligence; tests as description, UX audit | –                 |
 
 ## Basecamp agenda → where to prepare
@@ -40,9 +39,9 @@ Clean, correct knowledge + a playground for building **Claude into products**: a
 | Protocols / Prompt Rescue      | Project 01 `eval.py minimal` vs `detailed`                            |
 | Diagnosing AI Problems         | Read the FAIL lines and transcripts of every `eval.py`                |
 | Delivering the Claude Demo     | Project 02: chat demo + eval numbers                                  |
-| Evals                          | Concept 07 · every project's `eval.py`                                |
-| Inference Optimization         | Concept 08 (`prompt_caching.py`) · token/latency output of project 01 |
-| Workshop · Context Engineering | Concept 06 · project 03                                               |
+| Evals                          | Concept 06 · every project's `eval.py`                                |
+| Inference Optimization         | Concept 07 (`prompt_caching.py`) · token/latency output of project 01 |
+| Workshop · Context Engineering | Project 03 · context terms in [`KEYWORDS.md`](KEYWORDS.md)            |
 | Hackathon · Agent Build        | Project 02 as the starter; patterns from concept 04                   |
 
 ## Setup

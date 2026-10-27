@@ -2,7 +2,7 @@
 
 Answer a business question ("Should Acme enter the Nordic heat-pump market?") from a document corpus with a lead agent, parallel researchers and a synthesizer that writes a cited decision brief.
 
-**Pattern:** orchestrator–workers + parallelization (hub-and-spoke). **Concepts:** [04 Multi-agent](../../concepts/04_workflows_and_multi_agent/) · [06 Context engineering](../../concepts/06_context_engineering/) · [07 Evals](../../concepts/07_evals/)
+**Pattern:** orchestrator–workers + parallelization (hub-and-spoke). **Concepts:** [04 Multi-agent](../../concepts/04_workflows_and_multi_agent/) · [06 Evals](../../concepts/06_evals/)
 
 ```
 question ──► planner (sees: corpus INDEX only)

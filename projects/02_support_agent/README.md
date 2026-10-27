@@ -2,7 +2,7 @@
 
 A chat agent for an online shop: answers policy questions, verifies customers, looks up orders, issues refunds, escalates to a human — with the money rules enforced in code.
 
-**Pattern:** single agent, tool loop. **Concepts:** [02 Loop](../../concepts/02_agentic_loop/) · [03 Tool design](../../concepts/03_tool_design/) · [05 Guardrails](../../concepts/05_guardrails_and_hooks/) · [07 Evals](../../concepts/07_evals/)
+**Pattern:** single agent, tool loop. **Concepts:** [02 Loop](../../concepts/02_agentic_loop/) · [03 Tool design](../../concepts/03_tool_design/) · [05 Guardrails](../../concepts/05_guardrails_and_hooks/) · [06 Evals](../../concepts/06_evals/)
 
 ## Files
 
@@ -39,6 +39,6 @@ uv run python eval.py    # measure
 2. Make the `process_refund` description vague ("Refunds an order"). Re-run the eval.
 3. Add a `cancel_order` tool for `shipped` orders + two scenarios for it.
 4. Turn `on_tool_call` into an approval hook: refunds > €100 need `input("approve? ")`.
-5. Add an LLM-judge check for tone (see [`concepts/07_evals/graders.py`](../../concepts/07_evals/graders.py)).
+5. Add an LLM-judge check for tone (see [`concepts/06_evals/graders.py`](../../concepts/06_evals/graders.py)).
 
 Guide: <https://platform.claude.com/docs/en/about-claude/use-case-guides/customer-support-chat>

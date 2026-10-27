@@ -3,7 +3,7 @@
 Classify incoming support tickets by **intent** and **urgency** and send them to the right queue.
 
 **Pattern:** routing workflow — one structured LLM call, code does the rest. No agent needed.
-**Concepts:** [04 Routing](../../concepts/04_workflows_and_multi_agent/) · [07 Evals](../../concepts/07_evals/) · [08 Caching](../../concepts/08_inference_optimization/)
+**Concepts:** [04 Routing](../../concepts/04_workflows_and_multi_agent/) · [06 Evals](../../concepts/06_evals/) · [07 Caching](../../concepts/07_inference_optimization/)
 
 ## Files
 

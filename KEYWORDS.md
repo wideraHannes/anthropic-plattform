@@ -73,28 +73,28 @@ One line per term. Grouped the way Anthropic talks about them. **Where** points 
 
 | Term | Meaning | Where |
 |---|---|---|
-| **Context engineering** | Curating the *smallest set of high-signal tokens* at every turn, not only the first prompt. | [06](concepts/06_context_engineering/) |
-| **Context window** | Everything the model sees: system, tools, history, tool results, documents. | [06](concepts/06_context_engineering/) |
-| **Context rot** | Recall and focus degrade as the context grows. Context is a finite "attention budget". | [06](concepts/06_context_engineering/) |
-| **Right altitude (system prompt)** | Between brittle if/else rules and vague guidance. | [06](concepts/06_context_engineering/) |
+| **Context engineering** | Curating the *smallest set of high-signal tokens* at every turn, not only the first prompt. | — |
+| **Context window** | Everything the model sees: system, tools, history, tool results, documents. | — |
+| **Context rot** | Recall and focus degrade as the context grows. Context is a finite "attention budget". | — |
+| **Right altitude (system prompt)** | Between brittle if/else rules and vague guidance. | — |
 | **Just-in-time retrieval** | Keep references (IDs, paths), load details via tools when needed. | [P03](projects/03_research_multi_agent/) |
-| **Compaction** | Summarise old history near the limit and continue with the summary. | [06](concepts/06_context_engineering/) |
-| **Context editing** | Clear stale tool results / thinking blocks from the history. | [06](concepts/06_context_engineering/) |
-| **Memory tool / structured note-taking** | Agent writes state to files outside the window and reloads it later. | [06](concepts/06_context_engineering/) |
+| **Compaction** | Summarise old history near the limit and continue with the summary. | — |
+| **Context editing** | Clear stale tool results / thinking blocks from the history. | — |
+| **Memory tool / structured note-taking** | Agent writes state to files outside the window and reloads it later. | — |
 | **Progressive disclosure** | Show the model a short summary first, details only on demand. | — |
-| **Resume / fork / fresh start** | Continue a session, branch from it, or restart with a curated summary. | [06/01](concepts/06_context_engineering/01_session_state/) |
-| **Stale context** | Old tool results that no longer match reality; they silently bias reasoning. | [06/01](concepts/06_context_engineering/01_session_state/) |
+| **Resume / fork / fresh start** | Continue a session, branch from it, or restart with a curated summary. | — |
+| **Stale context** | Old tool results that no longer match reality; they silently bias reasoning. | — |
 
 ## Evals
 
 | Term | Meaning | Where |
 |---|---|---|
-| **Success criteria** | Specific, measurable targets (accuracy, latency, cost, safety) defined *before* building. | [07](concepts/07_evals/) |
+| **Success criteria** | Specific, measurable targets (accuracy, latency, cost, safety) defined *before* building. | [06](concepts/06_evals/) |
 | **Eval dataset** | Fixed inputs from real traffic plus edge and adversarial cases. | [P01](projects/01_ticket_routing/) |
-| **Code-based grader** | Exact match, regex, schema or state check: cheap and deterministic. | [07](concepts/07_evals/) |
-| **LLM-as-judge** | Model grades against a rubric; reason first, then verdict. | [07](concepts/07_evals/) |
+| **Code-based grader** | Exact match, regex, schema or state check: cheap and deterministic. | [06](concepts/06_evals/) |
+| **LLM-as-judge** | Model grades against a rubric; reason first, then verdict. | [06](concepts/06_evals/) |
 | **Outcome vs trajectory** | Grade the final state *and* the path (right tools, right order). | [P02](projects/02_support_agent/) |
-| **Transcript** | Full record of a run; read it to understand *why* a case failed. | [07](concepts/07_evals/) |
+| **Transcript** | Full record of a run; read it to understand *why* a case failed. | [06](concepts/06_evals/) |
 | **pass@k / pass^k** | At least one of k tries succeeds / all k tries succeed (consistency). | — |
 | **Discriminating eval** | A set hard enough to tell two versions apart; 100 % for both tells you nothing. | [P01](projects/01_ticket_routing/) |
 | **Faithfulness / grounding** | Claims backed by the provided sources (citations, verbatim quotes). | [P03](projects/03_research_multi_agent/) |
@@ -103,16 +103,16 @@ One line per term. Grouped the way Anthropic talks about them. **Where** points 
 
 | Term | Meaning | Where |
 |---|---|---|
-| **Prompt caching** | Reuse a stable prefix (`tools → system → messages`); cache reads cost ~10 % of input. | [08](concepts/08_inference_optimization/) |
-| **`cache_control` breakpoint** | Marks where the cached prefix ends (max 4); a minimum prefix size applies. | [08](concepts/08_inference_optimization/) |
-| **Silent cache invalidator** | A timestamp, UUID or unsorted JSON in the prefix, so every request misses the cache. | [08](concepts/08_inference_optimization/) |
-| **Batch API** | Async processing at −50 % cost, results within 24 h. | [08](concepts/08_inference_optimization/) |
-| **Effort** | `output_config.effort` (`low` … `max`): trades thoroughness against tokens. | [08](concepts/08_inference_optimization/) |
-| **Adaptive thinking** | Model decides when and how much to think (`thinking: {type: "adaptive"}`). | [08](concepts/08_inference_optimization/) |
-| **Model tiers** | Opus (hardest reasoning) · Sonnet (most production) · Haiku (high-volume, simple, subagents). | [08](concepts/08_inference_optimization/) |
-| **TTFT** | Time to first token; improved by streaming, shorter prefixes, caching. | [08](concepts/08_inference_optimization/) |
-| **Token counting** | `messages.count_tokens`: know the cost before sending. | [08](concepts/08_inference_optimization/) |
-| **Cost per completed task** | The real metric: a cheaper call that needs more retries isn't cheaper. | [08](concepts/08_inference_optimization/) |
+| **Prompt caching** | Reuse a stable prefix (`tools → system → messages`); cache reads cost ~10 % of input. | [07](concepts/07_inference_optimization/) |
+| **`cache_control` breakpoint** | Marks where the cached prefix ends (max 4); a minimum prefix size applies. | [07](concepts/07_inference_optimization/) |
+| **Silent cache invalidator** | A timestamp, UUID or unsorted JSON in the prefix, so every request misses the cache. | [07](concepts/07_inference_optimization/) |
+| **Batch API** | Async processing at −50 % cost, results within 24 h. | [07](concepts/07_inference_optimization/) |
+| **Effort** | `output_config.effort` (`low` … `max`): trades thoroughness against tokens. | [07](concepts/07_inference_optimization/) |
+| **Adaptive thinking** | Model decides when and how much to think (`thinking: {type: "adaptive"}`). | [07](concepts/07_inference_optimization/) |
+| **Model tiers** | Opus (hardest reasoning) · Sonnet (most production) · Haiku (high-volume, simple, subagents). | [07](concepts/07_inference_optimization/) |
+| **TTFT** | Time to first token; improved by streaming, shorter prefixes, caching. | [07](concepts/07_inference_optimization/) |
+| **Token counting** | `messages.count_tokens`: know the cost before sending. | [07](concepts/07_inference_optimization/) |
+| **Cost per completed task** | The real metric: a cheaper call that needs more retries isn't cheaper. | [07](concepts/07_inference_optimization/) |
 
 ## AI Fluency (4D framework)
 

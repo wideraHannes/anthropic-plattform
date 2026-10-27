@@ -26,7 +26,7 @@ inner loop:  Description ◄─────────────────�
 
 - **Delegation:** delegate implementation, keep judgement.
 - **Description:** tests are the most precise description.
-- **Discernment:** all 25 tests passed, yet the UX audit still found unclear labels, missing feedback and raw JSON errors.
+- **Discernment:** all tests passed, yet the UX audit still found unclear labels, missing feedback and raw JSON errors.
 - **Diligence:** verify, disclose AI use, understand what you ship.
 
 ## Run
