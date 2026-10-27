@@ -40,24 +40,15 @@ class Handoff(BaseModel):
     )
 
 
-HANDOFF_TOOL = {
-    "name": "record_handoff",
-    "description": "Record the structured handoff summary for the human agent.",
-    "input_schema": Handoff.model_json_schema(),
-}
-
-
 def build_handoff(conversation: str) -> Handoff:
-    response = client.messages.create(
+    response = client.messages.parse(
         model=settings.default_model,
         max_tokens=2048,
         system=SYSTEM,
-        tools=[HANDOFF_TOOL],
-        tool_choice={"type": "tool", "name": "record_handoff"},
         messages=[{"role": "user", "content": conversation}],
+        output_format=Handoff,
     )
-    tool_use = next(b for b in response.content if b.type == "tool_use")
-    return Handoff.model_validate(tool_use.input)
+    return response.parsed_output
 
 
 REQUIRED_CONCERNS = {

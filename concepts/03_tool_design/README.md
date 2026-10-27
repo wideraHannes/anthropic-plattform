@@ -11,7 +11,7 @@ Basecamp: *Read and modify an unfamiliar agent's tool definitions*.
 3. **Constrain inputs in the schema** (enums, formats, `strict: true`), not in prose.
 4. **Structured errors**: `errorCategory` (transient · validation · business · permission), `isRetryable`, a human-readable `description`. An empty result is *not* an error.
 5. **Return what the model needs, not everything you have.** Trim payloads; meaningful IDs/names over UUID dumps.
-6. **`tool_choice`** — `auto` for chat, force a specific tool for a mandatory step / structured output (on models that support forcing; on newest models use `auto` + `strict` or structured outputs).
+6. **`tool_choice`** — `auto` for chat; force a specific tool for a mandatory step (on models that support forcing; the newest reject it). Want JSON back? Use **structured outputs** (`client.messages.parse`), not a tool.
 
 ## MCP in a product
 
@@ -22,15 +22,15 @@ MCP is how you *ship* tools to many agents. In your own app: Messages API **MCP 
 - Overlapping descriptions → misrouting that no system prompt fixes.
 - One 18-tool super-agent.
 - Generic `fetch_url(url)` when the agent only ever needs `get_docs_page(slug)`.
-- Raising exceptions instead of returning a structured error result.
+- Crashing the loop on a tool exception, or returning a bare `"error"` string. Return a structured error result (manual loop: `is_error: true`; Tool Runner: `raise ToolError(...)`).
 
 ## Code here
 
 | Folder | Shows | Cert |
 |---|---|---|
 | [`01_schema_design/`](01_schema_design/) | Minimal vs production descriptions, measured misrouting A/B. | 2.1 |
-| [`02_structured_errors/`](02_structured_errors/) | Error categories driving retry vs escalate. | 2.2 |
-| [`03_tool_choice/`](03_tool_choice/) | Overloaded vs scoped toolsets, constrained tools, `tool_choice` modes. | 2.3 |
+| [`02_structured_errors/`](02_structured_errors/) | Error categories driving retry vs stop, graded by tool-call count. | 2.2 |
+| [`03_tool_choice/`](03_tool_choice/) | Overloaded vs scoped toolsets, a constrained tool proven by pytest, `tool_choice` modes. | 2.3 |
 
 ## Sources
 

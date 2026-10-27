@@ -32,11 +32,10 @@ Basecamp: *Defend the design choices to a technical buyer*.
 
 | Folder | Shows | Cert |
 |---|---|---|
-| [`00_agent_sdk_basics/`](00_agent_sdk_basics/) | Minimal Agent SDK `query()` loop with built-in tools. | — |
-| [`01_prerequisite_gates_and_handoff/`](01_prerequisite_gates_and_handoff/) | Refund gate (8 % → 0 %), structured human handoff. | 1.4 |
+| [`01_prerequisite_gates_and_handoff/`](01_prerequisite_gates_and_handoff/) | Gate notes + structured human handoff via `messages.parse`; gate code and tests in project 02. | 1.4 |
 | [`02_sdk_hooks/`](02_sdk_hooks/) | `PreToolUse` / `PostToolUse` hooks in the Agent SDK. | 1.5 |
 
-Applied end-to-end in [project 02 — support agent](../../projects/02_support_agent/).
+Applied end-to-end in [project 02 — support agent](../../projects/02_support_agent/), gates tested with pytest. Agent SDK basics: [02 / Agent SDK](../02_agentic_loop/agent_sdk/).
 
 ## Sources
 

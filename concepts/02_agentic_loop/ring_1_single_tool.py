@@ -1,4 +1,10 @@
-# Ring 1: Single tool, single turn — Star Wars weather variant.
+"""
+Ring 1: one tool, one round trip — no loop yet.
+
+The tool description scopes the tool to Star Wars lore, so even a real-world
+weather question gets an in-universe answer. Watch stop_reason: "tool_use",
+then "end_turn" after we send the result back.
+"""
 
 import json
 

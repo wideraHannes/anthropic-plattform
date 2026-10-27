@@ -15,12 +15,12 @@ One line per term. Grouped the way Anthropic talks about them. **Where** points 
 | **Parallelization** | *Sectioning* (independent subtasks at once) or *voting* (same task several times). | [P03](projects/03_research_multi_agent/) |
 | **Orchestrator–workers** | Lead LLM decides subtasks at runtime, delegates to workers, merges results. | [P03](projects/03_research_multi_agent/) |
 | **Evaluator–optimizer** | One call generates, another critiques against criteria, loop until good. | [04](concepts/04_workflows_and_multi_agent/) |
-| **Hub-and-spoke** | One coordinator (hub) talks to all subagents (spokes); spokes never talk to each other. | [04/01](concepts/04_workflows_and_multi_agent/01_hub_and_spoke/) |
-| **Coordinator / lead agent** | The hub: decomposes, dispatches, detects gaps, aggregates. Does no work itself. | [04/01](concepts/04_workflows_and_multi_agent/01_hub_and_spoke/) |
-| **Subagent** | Worker with its **own fresh context**; knows only what the coordinator passes it. | [04/02](concepts/04_workflows_and_multi_agent/02_subagents_sdk/) |
-| **Decomposition breadth** | Split broadly with non-overlapping scopes; narrow splits silently drop coverage. | [04/01](concepts/04_workflows_and_multi_agent/01_hub_and_spoke/) |
-| **Fixed pipeline vs dynamic decomposition** | Steps known upfront vs plan emerges during the work. Choose by shape, not size. | [04/03](concepts/04_workflows_and_multi_agent/03_task_decomposition/) |
-| **Attention dilution** | Too many items in one context → shallow, inconsistent treatment. Fix: per-item passes + one integration pass. | [04/03](concepts/04_workflows_and_multi_agent/03_task_decomposition/) |
+| **Hub-and-spoke** | One coordinator (hub) talks to all subagents (spokes); spokes never talk to each other. | [04](concepts/04_workflows_and_multi_agent/), [P03](projects/03_research_multi_agent/) |
+| **Coordinator / lead agent** | The hub: decomposes, dispatches, detects gaps, aggregates. Does no work itself. | [04](concepts/04_workflows_and_multi_agent/), [P03](projects/03_research_multi_agent/) |
+| **Subagent** | Worker with its **own fresh context**; knows only what the coordinator passes it. | [04/01](concepts/04_workflows_and_multi_agent/01_subagents_sdk/) |
+| **Decomposition breadth** | Split broadly with non-overlapping scopes; narrow splits silently drop coverage. | [04](concepts/04_workflows_and_multi_agent/) |
+| **Fixed pipeline vs dynamic decomposition** | Steps known upfront vs plan emerges during the work. Choose by shape, not size. | [04](concepts/04_workflows_and_multi_agent/) |
+| **Attention dilution** | Too many items in one context → shallow, inconsistent treatment. Fix: per-item passes + one integration pass. | [04](concepts/04_workflows_and_multi_agent/) |
 
 ## The loop & build surfaces
 
@@ -32,7 +32,7 @@ One line per term. Grouped the way Anthropic talks about them. **Where** points 
 | **Parallel tool use** | Several `tool_use` blocks in one turn; return all results in one user message. | [02](concepts/02_agentic_loop/) |
 | **Messages API** | `POST /v1/messages`, stateless; you resend the full history. | [02](concepts/02_agentic_loop/) |
 | **Tool Runner** | SDK helper (`client.beta.messages.tool_runner` + `@beta_tool`) that runs the loop for your tools. | [02](concepts/02_agentic_loop/) |
-| **Claude Agent SDK** | Claude Code's harness as a library: built-in tools, subagents, hooks, sessions. You host it. | [05/00](concepts/05_guardrails_and_hooks/00_agent_sdk_basics/) |
+| **Claude Agent SDK** | Claude Code's harness as a library: built-in tools, subagents, hooks, sessions. You host it. | [02/SDK](concepts/02_agentic_loop/agent_sdk/) |
 | **Claude Managed Agents** | Anthropic hosts the loop *and* a per-session sandbox; versioned agent configs. | [02](concepts/02_agentic_loop/) |
 | **Harness** | Everything around the model: loop, tools, context management, permissions. | [02](concepts/02_agentic_loop/) |
 
@@ -67,7 +67,7 @@ One line per term. Grouped the way Anthropic talks about them. **Where** points 
 | **Structured handoff** | Validated object for a human (customer, summary, root cause, amount, action). | [P02](projects/02_support_agent/) |
 | **Human in the loop** | Human approval for irreversible or high-value actions. | [05](concepts/05_guardrails_and_hooks/) |
 | **Prompt injection** | Instructions hidden in tool results/data; treat them as data, gate the actions. | [P02](projects/02_support_agent/) |
-| **`permission_mode`** | Agent SDK setting for which tool calls auto-approve. | [05/00](concepts/05_guardrails_and_hooks/00_agent_sdk_basics/) |
+| **`permission_mode`** | Agent SDK setting for which tool calls auto-approve. | [02/SDK](concepts/02_agentic_loop/agent_sdk/) |
 
 ## Context engineering
 

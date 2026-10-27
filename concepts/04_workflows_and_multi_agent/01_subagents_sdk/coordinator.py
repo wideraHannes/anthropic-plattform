@@ -18,22 +18,11 @@ Design:
     as a coarse attribution check (Step 5).
 """
 
-from __future__ import annotations
-
-import anyio
+import re
 from pathlib import Path
 
-from claude_agent_sdk import (
-    AgentDefinition,
-    AssistantMessage,
-    ClaudeAgentOptions,
-    ResultMessage,
-    SystemMessage,
-    TextBlock,
-    ToolUseBlock,
-    UserMessage,
-    query,
-)
+import anyio
+from claude_agent_sdk import AgentDefinition, AssistantMessage, ClaudeAgentOptions, ResultMessage, ToolUseBlock, query
 
 
 SOURCES_DIR = Path(__file__).parent / "sources"
@@ -192,9 +181,6 @@ async def run(topic: str) -> str:
     final_text = ""
 
     async for msg in query(prompt=topic, options=options):
-        if isinstance(msg, SystemMessage):
-            continue
-
         if isinstance(msg, AssistantMessage):
             tool_uses = [b for b in msg.content if isinstance(b, ToolUseBlock)]
             agent_calls_in_turn = [
@@ -207,10 +193,6 @@ async def run(topic: str) -> str:
                 origin = "coordinator" if msg.parent_tool_use_id is None else "subagent"
                 subagent_calls.append(f"{origin} -> {sub}")
                 print(f"[{origin}] spawn {sub}")
-
-        if isinstance(msg, UserMessage):
-            # tool_result blocks show up here; we don't dump them (too noisy).
-            continue
 
         if isinstance(msg, ResultMessage):
             final_text = msg.result or ""
@@ -228,7 +210,7 @@ def _verify_attribution(report: str) -> None:
     print("\n" + "=" * 60)
     checks = {
         "web citation present":  "http" in report,
-        "page citation present": "p." in report.lower(),
+        "page citation present": bool(re.search(r"\bp\.\s?\d+", report)),
         "sources section":       "## Sources" in report or "## sources" in report.lower(),
     }
     for name, ok in checks.items():

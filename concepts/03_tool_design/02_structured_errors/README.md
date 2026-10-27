@@ -30,8 +30,7 @@ Subagents recover locally where they can; only unresolvable errors bubble up, wi
 
 ## Implementation — `error_recovery_loop.py`
 
-- `ToolError` / `ToolResult` — the required metadata shape.
-- `TRANSIENT`, `VALIDATION`, `BUSINESS`, `PERMISSION`, `EMPTY`, `SUCCESS` — one canonical outcome each, reused in the scripts.
-- `decide()` — the recovery table in code.
-- `run_agent()` — hand-rolled loop so the recovery branch is visible; feeds results back as JSON with `is_error` set.
-- `main()` — scripts one scenario per branch.
+- `error()` + `TRANSIENT` … `SUCCESS` — one canonical wire shape per outcome.
+- `run_agent()` — hand-rolled loop so the `is_error` branch is visible; returns the number of tool calls.
+- `SCENARIOS` — one per branch with the **expected** call count (retry → 2, stop → 1). The script prints PASS/FAIL per recovery, so it's a small eval, not a demo.
+- With the Tool Runner, the same shape travels as `raise ToolError(json.dumps({...}))` — see [project 02](../../../projects/02_support_agent/tools.py).

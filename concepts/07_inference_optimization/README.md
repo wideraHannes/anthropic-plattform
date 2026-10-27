@@ -1,4 +1,4 @@
-# 08 — Inference Optimization (cost · latency · quality)
+# 07 — Inference Optimization (cost · latency · quality)
 
 > Optimise cost per *completed task*, not per request. Free wins first (caching, trimming, batching), trade-offs second (effort, model choice).
 

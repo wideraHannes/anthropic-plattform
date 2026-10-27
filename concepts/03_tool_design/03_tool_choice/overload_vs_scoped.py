@@ -10,9 +10,9 @@ We measure two things per run:
   - Round-trip latency.
 
 Reads out as an A/B table. Illustrates the 4–5-per-role rule from the guide.
+A demo, not an eval: 3 queries and "any tool of the right role counts" can't
+discriminate much — add harder, cross-role queries before you trust a number.
 """
-
-from __future__ import annotations
 
 import time
 from typing import Any
@@ -86,7 +86,11 @@ CASES = [
     },
     {
         "role": "synthesis",
-        "query": "Turn these three findings into a Markdown report with citations: ...",
+        "query": (
+            "Turn these findings into a Markdown report with citations: "
+            "(1) Solar capacity grew 30% in 2024 [iea.org]; (2) wind grew 12% [gwec.net]; "
+            "(3) storage costs fell 20% [bnef.com]."
+        ),
         "acceptable": {t[0] for t in SYNTHESIS_TOOLS},
     },
 ]
@@ -103,8 +107,8 @@ def call(tools: list[dict[str, Any]], query: str) -> tuple[str | None, float]:
     resp = client.messages.create(
         model=settings.default_model,
         max_tokens=256,
+        system="Call exactly one tool for the request. Do not answer in prose.",
         tools=tools,
-        tool_choice={"type": "any"},  # force a tool pick so we can compare
         messages=[{"role": "user", "content": query}],
     )
     dt = time.perf_counter() - t0

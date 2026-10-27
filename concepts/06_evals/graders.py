@@ -39,16 +39,10 @@ def code_grader(reply: str) -> bool:
 
 
 def llm_judge(reply: str) -> Verdict:
-    tool = {
-        "name": "record_verdict",
-        "description": "Record the grading verdict.",
-        "input_schema": Verdict.model_json_schema(),
-    }
-    response = client.messages.create(
+    response = client.messages.parse(
         model=settings.default_model,
         max_tokens=1024,
-        tools=[tool],
-        tool_choice={"type": "tool", "name": "record_verdict"},
+        output_format=Verdict,
         messages=[
             {
                 "role": "user",
@@ -57,8 +51,7 @@ def llm_judge(reply: str) -> Verdict:
             }
         ],
     )
-    tool_use = next(b for b in response.content if b.type == "tool_use")
-    return Verdict.model_validate(tool_use.input)
+    return response.parsed_output
 
 
 if __name__ == "__main__":

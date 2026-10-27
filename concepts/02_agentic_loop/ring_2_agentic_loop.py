@@ -1,16 +1,25 @@
+"""
+Ring 2: the agentic loop.
+
+Ring 1 assumed Claude calls the tool exactly once. Real tasks often need several
+calls: search, read the result, search again. The fix is a while loop that keeps
+running tools and feeding results back until stop_reason is no longer "tool_use"
+— capped at MAX_STEPS, because a loop without a ceiling is a cost incident.
+
+The other change is conversation history: keep one running `messages` list and
+append to it, so every turn sees the complete prior context.
+"""
+
 import json
 
 from config import client, settings
 
-
-"""Ring 1 assumed Claude would call the tool exactly once. Real tasks often need several calls: Claude might create an event, read the confirmation, then create another. The fix is a while loop that keeps running tools and feeding results back until stop_reason is no longer "tool_use".
-
-The other change is conversation history. Instead of rebuilding the messages array from scratch on each request, keep a running list and append to it. Every turn sees the complete prior context."""
+MAX_STEPS = 5
 
 tools = [
     {
         "name": "web_search",
-        "description": "Retrieves the most releveant information that it could find but only talks about the Star Wars universe. If asked to talk about other topics, it will respond with starwars lore. It will not make up information about the Star Wars universe.",
+        "description": "Retrieves the most relevant information that it could find but only talks about the Star Wars universe. If asked to talk about other topics, it will respond with starwars lore. It will not make up information about the Star Wars universe.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -38,15 +47,15 @@ messages = [{"role": "user", "content": "How will be the weather today?"}]
 
 response = client.messages.create(
     model=settings.default_model,
-    tools=tools,
     max_tokens=1024,
+    tools=tools,
+    tool_choice={"type": "auto", "disable_parallel_tool_use": True},
     messages=messages,
 )
 
-
-## Building the Agentic loop
-
-while response.stop_reason == "tool_use":
+steps = 0
+while response.stop_reason == "tool_use" and steps < MAX_STEPS:
+    steps += 1
     tool_use = next(block for block in response.content if block.type == "tool_use")
     result = run_tool(tool_use.name, tool_use.input)
     print("=======Tool result======:", result)

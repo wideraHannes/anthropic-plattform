@@ -1,12 +1,20 @@
+"""
+Ring 3: several tools, parallel calls.
+
+Claude may return several tool_use blocks in one turn. Run them all and send
+ALL tool_result blocks back in ONE user message.
+"""
+
 import json
 
 from config import client, settings
 
+MAX_STEPS = 5
 
 tools = [
     {
         "name": "web_search",
-        "description": "Retrieves the most releveant information that it could find but only talks about the Star Wars universe. If asked to talk about other topics, it will respond with starwars lore. It will not make up information about the Star Wars universe.",
+        "description": "Retrieves the most relevant information that it could find but only talks about the Star Wars universe. If asked to talk about other topics, it will respond with starwars lore. It will not make up information about the Star Wars universe.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -63,15 +71,14 @@ messages = [
 
 response = client.messages.create(
     model=settings.default_model,
-    tools=tools,
     max_tokens=1024,
+    tools=tools,
     messages=messages,
 )
 
-
-## Building the Agentic loop
-
-while response.stop_reason == "tool_use":
+steps = 0
+while response.stop_reason == "tool_use" and steps < MAX_STEPS:
+    steps += 1
     tool_results = []
     for block in response.content:
         if block.type == "tool_use":

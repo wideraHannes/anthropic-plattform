@@ -1,164 +1,99 @@
 """
-Practical for 2.2 — Structured Error Responses.
+Structured error responses (cert 2.2): does the agent pick the right recovery?
 
-A flaky order-lookup tool returns each error category (plus valid-empty).
-The agent reads the metadata and picks a recovery.
+A scripted order-lookup tool returns one error category per scenario. The
+grader counts how often the model called the tool:
+  transient / validation → retry           → 2 calls
+  business / permission  → stop, explain   → 1 call
+  valid empty result     → no such order   → 1 call (retrying it is the trap)
+
+    uv run python error_recovery_loop.py
 """
 
-from __future__ import annotations
-
 import json
-import random
-from typing import Any, Literal
-
-from pydantic import BaseModel
 
 from config import client, settings
 
 
-class ToolError(BaseModel):
-    errorCategory: Literal["transient", "validation", "business", "permission"]
-    isRetryable: bool
-    description: str
+def error(category: str, retryable: bool, description: str) -> dict:
+    return {"isError": True, "errorCategory": category, "isRetryable": retryable, "description": description}
 
 
-class ToolResult(BaseModel):
-    isError: bool
-    resultCount: int = 0
-    data: list[dict[str, Any]] = []
-    error: ToolError | None = None
+TRANSIENT = error("transient", True, "Upstream order-service timed out.")
+VALIDATION = error("validation", True, "`order_id` must match /^A-\\d{4}$/, e.g. 'A-8891'.")
+BUSINESS = error("business", False, "Order is archived; status lookups are closed after 2 years.")
+PERMISSION = error("permission", False, "Caller lacks scope `orders:read:pii`.")
+EMPTY = {"isError": False, "resultCount": 0, "data": []}
+SUCCESS = {"isError": False, "resultCount": 1, "data": [{"order_id": "A-8891", "status": "shipped"}]}
 
-
-TRANSIENT = ToolResult(
-    isError=True,
-    error=ToolError(
-        errorCategory="transient",
-        isRetryable=True,
-        description="Upstream order-service timed out.",
-    ),
-)
-VALIDATION = ToolResult(
-    isError=True,
-    error=ToolError(
-        errorCategory="validation",
-        isRetryable=True,
-        description="`order_id` must match /^A-\\d{4}$/.",
-    ),
-)
-BUSINESS = ToolResult(
-    isError=True,
-    error=ToolError(
-        errorCategory="business",
-        isRetryable=False,
-        description="Refund exceeds self-serve policy limit.",
-    ),
-)
-PERMISSION = ToolResult(
-    isError=True,
-    error=ToolError(
-        errorCategory="permission",
-        isRetryable=False,
-        description="Caller lacks scope `orders:read:pii`.",
-    ),
-)
-EMPTY = ToolResult(isError=False, resultCount=0)
-SUCCESS = ToolResult(
-    isError=False,
-    resultCount=1,
-    data=[{"order_id": "A-8891", "status": "shipped"}],
-)
-
-OUTCOMES = [TRANSIENT, VALIDATION, BUSINESS, PERMISSION, EMPTY, SUCCESS]
-
-
-def lookup_order(order_id: str, forced: ToolResult | None = None) -> ToolResult:
-    return forced if forced is not None else random.choice(OUTCOMES)
-
-
-TOOL_SCHEMA = {
+TOOL = {
     "name": "lookup_order",
     "description": (
         "Fetch a single order by id.\n"
-        "Success: {isError: false, resultCount, data}. "
-        "resultCount=0 means no such order — do NOT retry.\n"
-        "Failure: {isError: true, error: {errorCategory, isRetryable, description}}."
+        "Success: {isError: false, resultCount, data}. resultCount=0 means no such order — do NOT retry.\n"
+        "Failure: {isError: true, errorCategory, isRetryable, description}."
     ),
-    "input_schema": {
-        "type": "object",
-        "properties": {"order_id": {"type": "string"}},
-        "required": ["order_id"],
-    },
+    "input_schema": {"type": "object", "properties": {"order_id": {"type": "string"}}, "required": ["order_id"]},
 }
 
+SYSTEM = """You look up orders. Call `lookup_order`, then read the result.
+  transient  → retry with the same input.
+  validation → retry with corrected input.
+  business or permission → do not retry, explain and stop.
+  resultCount=0 → the order doesn't exist, stop."""
 
-def decide(result: ToolResult) -> str:
-    if not result.isError:
-        return "empty" if result.resultCount == 0 else "accept"
-    assert result.error
-    match result.error.errorCategory:
-        case "transient":
-            return "retry same"
-        case "validation":
-            return "retry fixed"
-        case _:
-            return "escalate"
-
-
-SYSTEM_PROMPT = (
-    "You look up orders. Call `lookup_order`, then read the result.\n"
-    "  transient  → retry with the same input.\n"
-    "  validation → retry with corrected input.\n"
-    "  business or permission → do not retry, explain and stop.\n"
-    "  resultCount=0 → the order doesn't exist, stop."
-)
+# (label, user message, scripted tool results, expected number of tool calls)
+SCENARIOS = [
+    ("transient → retry", "What's the status of order A-8891?", [TRANSIENT, SUCCESS], 2),
+    ("validation → fix input", "What's the status of order 8891?", [VALIDATION, SUCCESS], 2),
+    ("business → stop", "What's the status of order A-8891?", [BUSINESS], 1),
+    ("permission → stop", "What's the status of order A-8891?", [PERMISSION], 1),
+    ("empty → don't retry", "What's the status of order A-0000?", [EMPTY], 1),
+]
 
 
-def run_agent(query: str, script: list[ToolResult]) -> None:
-    messages: list[dict[str, Any]] = [{"role": "user", "content": query}]
-    step = 0
+def run_agent(question: str, script: list[dict]) -> int:
+    """Hand-rolled loop so the is_error branch is visible. Returns the number of tool calls."""
+    messages = [{"role": "user", "content": question}]
+    calls = 0
     for _ in range(6):
-        resp = client.messages.create(
+        response = client.messages.create(
             model=settings.default_model,
             max_tokens=512,
-            system=SYSTEM_PROMPT,
-            tools=[TOOL_SCHEMA],
+            system=SYSTEM,
+            tools=[TOOL],
             messages=messages,
         )
-        messages.append({"role": "assistant", "content": [b.model_dump() for b in resp.content]})
-
-        tool_uses = [b for b in resp.content if b.type == "tool_use"]
+        messages.append({"role": "assistant", "content": response.content})
+        tool_uses = [b for b in response.content if b.type == "tool_use"]
         if not tool_uses:
-            text = "".join(b.text for b in resp.content if b.type == "text")
-            print(f"  final → {text.strip()}\n")
-            return
+            print("  final →", "".join(b.text for b in response.content if b.type == "text").strip())
+            return calls
 
         results = []
-        for tu in tool_uses:
-            forced = script[step] if step < len(script) else None
-            result = lookup_order(**tu.input, forced=forced)
-            cat = result.error.errorCategory if result.error else "ok"
-            print(f"  step {step}: {cat:<10} → {decide(result)}")
+        for tool_use in tool_uses:
+            result = script[min(calls, len(script) - 1)]  # repeat the last outcome if it keeps calling
+            calls += 1
+            print(f"  call {calls}: {tool_use.input} → {result.get('errorCategory', 'ok')}")
             results.append({
                 "type": "tool_result",
-                "tool_use_id": tu.id,
-                "content": json.dumps(result.model_dump()),
-                "is_error": result.isError,
+                "tool_use_id": tool_use.id,
+                "content": json.dumps(result),
+                "is_error": result["isError"],
             })
-            step += 1
         messages.append({"role": "user", "content": results})
+    return calls
 
 
 def main() -> None:
-    scenarios = [
-        ("transient then success", [TRANSIENT, SUCCESS]),
-        ("validation then success", [VALIDATION, SUCCESS]),
-        ("business (no retry)", [BUSINESS]),
-        ("permission (escalate)", [PERMISSION]),
-        ("valid empty (do not retry)", [EMPTY]),
-    ]
-    for label, script in scenarios:
+    passed = 0
+    for label, question, script, expected_calls in SCENARIOS:
         print(f"\n─── {label} ───")
-        run_agent("What's the status of order A-8891?", script)
+        calls = run_agent(question, script)
+        ok = calls == expected_calls
+        passed += ok
+        print(f"  {'PASS' if ok else 'FAIL'}: {calls} tool call(s), expected {expected_calls}")
+    print(f"\n=== {passed}/{len(SCENARIOS)} recoveries correct ===")
 
 
 if __name__ == "__main__":

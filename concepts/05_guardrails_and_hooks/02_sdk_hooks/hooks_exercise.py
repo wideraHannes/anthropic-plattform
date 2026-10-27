@@ -19,8 +19,6 @@ Registration lives in ClaudeAgentOptions.hooks — one entry per event type,
 each pointing to a HookMatcher whose `matcher` filters by tool name.
 """
 
-from __future__ import annotations
-
 import asyncio
 from pathlib import Path
 from typing import Any
@@ -50,7 +48,6 @@ events: list[str] = []
 async def block_env_writes(
     input_data: dict[str, Any], _tool_use_id: str | None, _context: Any
 ) -> dict[str, Any]:
-    _ = (_tool_use_id, _context)  # reserved by the SDK signature
     file_path = input_data["tool_input"].get("file_path", "")
     if Path(file_path).name == ".env":
         events.append(f"DENIED Write to {file_path}")
@@ -75,7 +72,6 @@ async def block_env_writes(
 async def defang_rm_rf(
     input_data: dict[str, Any], _tool_use_id: str | None, _context: Any
 ) -> dict[str, Any]:
-    _ = (_tool_use_id, _context)
     command = input_data["tool_input"].get("command", "")
     if "rm -rf" in command:
         events.append(f"DEFANGED bash: {command!r}")
@@ -103,23 +99,11 @@ async def defang_rm_rf(
 async def annotate_bash_output(
     input_data: dict[str, Any], _tool_use_id: str | None, _context: Any
 ) -> dict[str, Any]:
-    _ = (_tool_use_id, _context)
-    response = input_data.get("tool_response")
-    # Built-in Bash returns a dict with stdout/stderr fields; MCP tools return
-    # a content-block list. Support both by extracting a text payload.
-    text = ""
-    if isinstance(response, dict):
-        if "stdout" in response or "stderr" in response:
-            text = (response.get("stdout") or "") + (response.get("stderr") or "")
-        else:
-            blocks = response.get("content") or []
-            if blocks and isinstance(blocks[0], dict):
-                text = blocks[0].get("text", "")
-    elif isinstance(response, list) and response:
-        first = response[0]
-        text = first.get("text", "") if isinstance(first, dict) else getattr(first, "text", "")
+    response = input_data.get("tool_response") or {}
+    # Built-in Bash returns {"stdout": ..., "stderr": ...}.
+    text = (response.get("stdout") or "") + (response.get("stderr") or "") if isinstance(response, dict) else ""
     if not text:
-        events.append(f"PostToolUse saw unrecognized response shape: {type(response).__name__}")
+        events.append(f"PostToolUse saw unexpected response shape: {type(response).__name__}")
         return {}
     events.append(f"ANNOTATED Bash output ({len(text)} chars)")
     return {
@@ -148,7 +132,6 @@ def _build_options() -> ClaudeAgentOptions:
             ],
         },
         permission_mode="acceptEdits",
-        tool_choice
     )
 
 

@@ -8,7 +8,7 @@ Basecamp: *Developer Platform*, *Hackathon · Agent Build*.
 
 1. **The API is stateless.** All state lives in the `messages` list you resend each turn.
 2. **Append the full assistant `content`**, then one user message with *all* matching `tool_result` blocks (bound by `tool_use_id`). Claude calls tools in parallel — answer every call in the same message.
-3. **Errors are results, not exceptions.** Return `is_error: true` with a useful message so the model can correct itself.
+3. **Errors are results, not crashes.** Return `is_error: true` with a useful message so the model can correct itself (Tool Runner: `raise ToolError(...)`).
 4. **Check `stop_reason` every turn**: `tool_use` (continue), `end_turn` (done), `max_tokens`, `pause_turn`, `refusal`.
 5. **Cap iterations and tokens.** A loop without a ceiling is a cost incident waiting to happen.
 6. **Use the Tool Runner** (`client.beta.messages.tool_runner` + `@beta_tool`) once you understand the hand-rolled loop.
@@ -32,7 +32,9 @@ Before any of these: **do you need an agent at all?** A single call or a fixed w
 | 2 | [`ring_2_agentic_loop.py`](ring_2_agentic_loop.py) | `while stop_reason == "tool_use"`. |
 | 3 | [`ring_3_multiple_tools.py`](ring_3_multiple_tools.py) | Several tools, parallel `tool_use` blocks in one turn. |
 | 4 | [`ring_4_error_handling.py`](ring_4_error_handling.py) | `is_error: true` so the model can retry. |
-| 5 | [`ring_5_tool_runner.py`](ring_5_tool_runner.py) | Same thing with the Tool Runner — production shape. |
+| 5 | [`ring_5_tool_runner.py`](ring_5_tool_runner.py) | Same thing with the Tool Runner — production shape; `ToolError` for error results. |
+
+Next step up the build-path table: [`agent_sdk/`](agent_sdk/) — the Claude Agent SDK, Claude Code's harness as a library.
 
 ## Sources
 

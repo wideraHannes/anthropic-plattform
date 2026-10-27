@@ -1,6 +1,6 @@
 # Subagent Invocation and Context Passing
 
-Notes on [1.3](https://claudecertificationguide.com/learn/1-agentic-architecture/1-3-subagent-invocation-context). Uses `claude-agent-sdk` — see [`agent_sdk.md`](./agent_sdk.md) for SDK basics.
+Notes on [1.3](https://claudecertificationguide.com/learn/1-agentic-architecture/1-3-subagent-invocation-context). Uses `claude-agent-sdk` — see [02 / Agent SDK](../../02_agentic_loop/agent_sdk/) for the basics.
 
 ## Rules
 

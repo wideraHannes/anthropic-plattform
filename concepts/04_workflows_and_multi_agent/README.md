@@ -17,12 +17,19 @@ Basecamp: *Hackathon · Agent Build*, *Defend the design choices*.
 
 ## Core rules for multi-agent
 
-1. **Hub-and-spoke**: one coordinator; subagents never talk peer-to-peer.
-2. **Subagents start with an empty context.** Pass every fact they need — explicitly.
-3. **Decompose broadly, with non-overlapping scopes.** Narrow decomposition silently drops coverage.
+1. **Hub-and-spoke**: one coordinator decomposes, dispatches, detects gaps, re-delegates and aggregates. It does no work itself; subagents never talk peer-to-peer.
+2. **Subagents start with an empty context** — no history, no shared memory. Pass every fact they need, explicitly.
+3. **Decompose broadly, with non-overlapping scopes.** Narrow decomposition silently drops coverage: split "renewable energy" into solar + wind and geothermal, tidal, biomass vanish. The failure traces back to the split, not the subagent.
 4. **Return condensed, structured results** (with sources) — the coordinator's context is the bottleneck.
 5. **Parallelize independent work**; serialise only real dependencies.
 6. **Multi-agent costs ~several× the tokens** of one agent. Worth it for breadth-heavy, parallelizable work; not for tightly coupled tasks.
+
+## Fixed pipeline or dynamic decomposition?
+
+- **Fixed pipeline** — steps known upfront (code review, extraction, compliance). Predictable, debuggable.
+- **Dynamic decomposition** — the plan emerges from the work (audits, legacy exploration, research). Choose by shape, not size.
+
+**Attention dilution:** many items in one context → deep on the first few, shallow and inconsistent on the rest. A bigger model, context or prompt doesn't fix it; it's structural. Fix: per-item passes + one integration pass (14 files → 14 focused calls + 1 integration call).
 
 ## Anti-patterns
 
@@ -34,9 +41,8 @@ Basecamp: *Hackathon · Agent Build*, *Defend the design choices*.
 
 | Folder | Shows | Cert |
 |---|---|---|
-| [`01_hub_and_spoke/`](01_hub_and_spoke/) | Messages-API coordinator, schema-enforced breadth, gap review loop. | 1.2 |
-| [`02_subagents_sdk/`](02_subagents_sdk/) | Same idea with the Agent SDK `Agent` tool, parallel spawn, citation metadata. | 1.3 |
-| [`03_task_decomposition/`](03_task_decomposition/) | Fixed pipeline vs dynamic decomposition, attention dilution. | 1.6 |
+| [project 03](../../projects/03_research_multi_agent/) | Hub-and-spoke on the Messages API: planner, parallel workers, review loop, cited synthesis, eval. | 1.2 · 1.6 |
+| [`01_subagents_sdk/`](01_subagents_sdk/) | Same idea with the Agent SDK `Agent` tool: parallel spawn, citation metadata. | 1.3 |
 
 ## Sources
 

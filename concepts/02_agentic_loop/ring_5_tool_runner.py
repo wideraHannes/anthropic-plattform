@@ -1,8 +1,15 @@
-# Ring 5: The Tool Runner SDK abstraction.
+"""
+Ring 5: the Tool Runner — rings 2–4 in one SDK call.
+
+@beta_tool turns a typed function + docstring into a tool definition; the runner
+calls the API, executes tools, sends results back and stops when Claude is done.
+Raise ToolError for an error result the model should read (is_error: true).
+"""
 
 import json
 
 from anthropic import beta_tool
+from anthropic.lib.tools import ToolError
 
 from config import client, settings
 
@@ -48,10 +55,7 @@ def get_planet_info(name: str) -> str:
         name: The planet's name, e.g. 'Tatooine'.
     """
     if name not in STAR_WARS_PLANETS:
-        raise ValueError(
-            f"'{name}' is not a known Star Wars planet. "
-            f"Call list_planets to see valid options."
-        )
+        raise ToolError(f"'{name}' is not a known Star Wars planet. Call list_planets to see valid options.")
     return json.dumps(
         {
             "name": name,
@@ -63,6 +67,7 @@ def get_planet_info(name: str) -> str:
 final_message = client.beta.messages.tool_runner(
     model=settings.default_model,
     max_tokens=1024,
+    max_iterations=5,
     tools=[web_search, list_planets, get_planet_info],
     messages=[
         {

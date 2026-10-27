@@ -28,7 +28,7 @@ Clean, correct knowledge + a playground for building **Claude into products**: a
 | --------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------- | ----------------- |
 | [01](projects/01_ticket_routing/)       | Ticket routing                                            | Routing workflow, structured output                                                | 04 · 06 · 07      |
 | [02](projects/02_support_agent/)        | Customer support agent (**reusable starter**)             | Single agent + gated tools + handoff                                               | 02 · 03 · 05 · 06 |
-| [03](projects/03_research_multi_agent/) | Multi-agent research                                      | Orchestrator–workers, parallel, cited synthesis                                    | 04 · 06           |
+| [03](projects/03_research_multi_agent/) | Multi-agent research                                      | Orchestrator–workers, parallel, gap review, cited synthesis                        | 04 · 06           |
 | [4D](projects/4D_framework/)            | Clinic wait time, built along the 4D AI Fluency framework | Delegation → Description → Discernment → Diligence; tests as description, UX audit | –                 |
 
 ## Basecamp agenda → where to prepare

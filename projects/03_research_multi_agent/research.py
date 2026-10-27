@@ -1,11 +1,12 @@
 """
-Multi-agent research: orchestrator → parallel workers → synthesizer.
+Multi-agent research: orchestrator → parallel workers → gap review → synthesizer.
 
     uv run python research.py "Should Acme launch HeatFlow in Norway in 2027?"
 
 Context engineering is the point of this project — each role sees only what it needs:
 - planner:     the question + a one-line INDEX of the corpus (not the documents)
 - workers:     one sub-question + only the documents assigned to it
+- reviewer:    the lead again, with the workers' open questions + the INDEX → follow-ups
 - synthesizer: the question + the workers' compressed, quoted findings
 """
 
@@ -30,6 +31,14 @@ class SubQuestion(BaseModel):
 
 class Plan(BaseModel):
     sub_questions: list[SubQuestion] = Field(min_length=3, max_length=5)
+
+
+class Review(BaseModel):
+    follow_ups: list[SubQuestion] = Field(
+        default_factory=list,
+        max_length=3,
+        description="Follow-up sub-questions for open questions the corpus can still answer. Empty if none.",
+    )
 
 
 class Finding(BaseModel):
@@ -80,10 +89,27 @@ competition, regulation, customers, money — whatever applies), and assign each
 the documents a researcher should read. You do not answer the question yourself."""
     prompt = f"<question>{question}</question>\n\n<corpus_index>\n{corpus_index()}\n</corpus_index>"
     result = _structured("planner", system, prompt, Plan)
-    for sq in result.sub_questions:  # never trust model-chosen references blindly
-        sq.docs = [d for d in sq.docs if d in CORPUS]
-    result.sub_questions = [sq for sq in result.sub_questions if sq.docs]
+    result.sub_questions = _valid_docs(result.sub_questions)
     return result
+
+
+def _valid_docs(sub_questions: list[SubQuestion]) -> list[SubQuestion]:
+    """Never trust model-chosen references blindly: keep only docs that exist."""
+    for sq in sub_questions:
+        sq.docs = [d for d in sq.docs if d in CORPUS]
+    return [sq for sq in sub_questions if sq.docs]
+
+
+def review(question: str, reports: list[WorkerReport]) -> list[SubQuestion]:
+    open_questions = "\n".join(f"- {q}" for r in reports for q in r.open_questions) or "- none"
+    system = """You are the lead researcher reviewing your researchers' gaps. For open
+questions that another document in the index could answer, write a follow-up
+sub-question and assign those documents. Ignore gaps the corpus cannot close."""
+    prompt = (
+        f"<question>{question}</question>\n\n<open_questions>\n{open_questions}\n</open_questions>\n\n"
+        f"<corpus_index>\n{corpus_index()}\n</corpus_index>"
+    )
+    return _valid_docs(_structured("reviewer", system, prompt, Review).follow_ups)
 
 
 def research(sub: SubQuestion) -> WorkerReport:
@@ -118,10 +144,17 @@ def run(question: str) -> dict:
     the_plan = plan(question)
     for sq in the_plan.sub_questions:
         print(f"[planner] {sq.question}  ->  {sq.docs}")
+    subs = the_plan.sub_questions
     with ThreadPoolExecutor() as pool:  # independent work runs in parallel
-        reports = list(pool.map(research, the_plan.sub_questions))
-    brief = synthesize(question, list(zip(the_plan.sub_questions, reports)))
-    return {"plan": the_plan, "reports": reports, "brief": brief, "usage": dict(USAGE)}
+        reports = list(pool.map(research, subs))
+        # One gap-review round: follow-ups only where the corpus can still help.
+        follow_ups = review(question, reports)
+        for sq in follow_ups:
+            print(f"[reviewer] {sq.question}  ->  {sq.docs}")
+        reports += list(pool.map(research, follow_ups))
+    subs = subs + follow_ups
+    brief = synthesize(question, list(zip(subs, reports)))
+    return {"plan": the_plan, "follow_ups": follow_ups, "reports": reports, "brief": brief, "usage": dict(USAGE)}
 
 
 if __name__ == "__main__":

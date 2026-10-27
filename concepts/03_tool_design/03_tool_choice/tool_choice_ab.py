@@ -7,11 +7,14 @@ Same prompt, three modes:
   3. tool/name   — model must call the named tool.
 
 The prompt is deliberately borderline: it can plausibly be answered in prose
-("hello!") without any tool. That surfaces the failure mode of `auto` when
-structured output is required.
-"""
+without any tool. That surfaces the failure mode of `auto` when the app needs a
+tool call.
 
-from __future__ import annotations
+Forcing (`any` / `tool`) works on Sonnet 4.6, Opus 4.8 and older; the newest
+models (Opus 5.5, Sonnet 5.5, Fable 5.1) reject it with a 400. There: `auto` +
+a clear instruction, `strict: true` on the tool — and if you only wanted JSON,
+structured outputs (`client.messages.parse`) instead of a tool at all.
+"""
 
 from typing import Any
 
