@@ -1,0 +1,14 @@
+{
+  "timezone": "Europe/Berlin",
+  "minutes_per_patient": 5,
+  "staff_token": "demo-token-change-me",
+  "quiet_hint": "Meist ruhig: Di und Do ab 14 Uhr",
+  "opening_hours": {
+    "mon": [["08:00", "12:00"], ["14:00", "18:00"]],
+    "tue": [["08:00", "12:00"], ["14:00", "18:00"]],
+    "wed": [["08:00", "12:00"]],
+    "thu": [["08:00", "12:00"], ["14:00", "18:00"]],
+    "fri": [["08:00", "12:00"]]
+  },
+  "holidays": ["2026-12-24", "2026-12-25", "2026-12-31", "2027-01-01"]
+}

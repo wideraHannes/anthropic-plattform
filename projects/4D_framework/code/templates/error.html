@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wartezeit – Fehler</title>
+<style>
+body{margin:0;font-family:system-ui,sans-serif;line-height:1.4;color:#1a1a1a;background:#fff}
+main{max-width:32rem;margin:0 auto;padding:1.5rem 1rem}
+h1{font-size:1.5rem;margin:0 0 1rem}
+p{font-size:1.25rem;margin:0 0 1.5rem}
+a{display:inline-block;font-size:1.25rem;padding:.75rem 1.5rem;border:2px solid #1a1a1a;border-radius:.75rem;color:#1a1a1a;text-decoration:none}
+</style>
+</head>
+<body>
+<main>
+<h1>Das hat nicht geklappt</h1>
+<p>{{ message }}</p>
+{% if back %}<a href="{{ back }}">Zurück zur Rezeptionsseite</a>{% endif %}
+</main>
+</body>
+</html>

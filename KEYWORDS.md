@@ -114,6 +114,18 @@ One line per term. Grouped the way Anthropic talks about them. **Where** points 
 | **Token counting** | `messages.count_tokens`: know the cost before sending. | [08](concepts/08_inference_optimization/) |
 | **Cost per completed task** | The real metric: a cheaper call that needs more retries isn't cheaper. | [08](concepts/08_inference_optimization/) |
 
+## AI Fluency (4D framework)
+
+| Term | Meaning | Where |
+|---|---|---|
+| **4D Framework / AI Fluency** | Four competencies for working with AI (Dakan & Feller): Delegation, Description, Discernment, Diligence. | [4D](projects/4D_framework/) |
+| **Automation / Augmentation / Agency** | The three modes: AI executes, you and AI co-create, or AI acts on its own within boundaries you set. | [4D](projects/4D_framework/) |
+| **Delegation** | Decide what AI should do at all and in which mode; delegate implementation, keep judgement. | [4D/1](projects/4D_framework/1_delegation/) |
+| **Description** | Tell AI what you want: product, process and performance. Tests are the most precise form. | [4D/2](projects/4D_framework/2_description/) |
+| **Discernment** | Judge whether the output is *good*, not just working: product, process, performance. | [4D/3](projects/4D_framework/3_discernment/) |
+| **Diligence** | Vouch for what you ship: creation, transparency and deployment diligence. | [4D/4](projects/4D_framework/4_diligence/) |
+| **Description–Discernment loop** | Inner loop: describe → AI produces → judge → refine the description. | [4D](projects/4D_framework/) |
+
 ## Sources
 
 - Building effective agents — <https://www.anthropic.com/engineering/building-effective-agents>
@@ -122,3 +134,5 @@ One line per term. Grouped the way Anthropic talks about them. **Where** points 
 - How we built our multi-agent research system — <https://www.anthropic.com/engineering/multi-agent-research-system>
 - Demystifying evals for AI agents — <https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents>
 - Build with Claude — <https://platform.claude.com/docs/en/build-with-claude/overview>
+- AI Fluency framework (Dakan & Feller) — <https://ringling.libguides.com/ai/framework>
+- AI Fluency: Framework and foundations — <https://academy.claude.com/courses/ai-fluency-framework-foundations>
