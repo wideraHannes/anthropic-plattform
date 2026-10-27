@@ -9,7 +9,7 @@ Classify incoming support tickets by **intent** and **urgency** and send them to
 
 | File | Role |
 |---|---|
-| `router.py` | `classify(ticket, prompt)` → `Routing(reasoning, intent, urgency)` via forced tool call; queue mapping in code. Two prompt versions in `PROMPTS`. |
+| `router.py` | `classify(ticket, prompt)` → `Routing(reasoning, intent, urgency)` via `client.messages.parse(output_format=Routing)`; queue mapping in code. Two prompt versions in `PROMPTS`. |
 | `tickets.json` | 22 labelled tickets incl. edge cases (multi-issue, German, repeat requests, refund-vs-shipping, fraud). |
 | `eval.py` | Accuracy per label, failing cases with the model's reasoning, latency, token usage. |
 
@@ -25,6 +25,7 @@ uv run python eval.py detailed    # after
 ## Design choices to defend
 
 - **Workflow, not agent** — the path is always classify → route. Predictable, cheap, testable.
+- **Structured outputs, not a forced tool call** — `messages.parse` with a Pydantic model guarantees the schema and returns a typed object. Forcing `tool_choice` is the older trick (rejected on the newest models) and costs the tool-use overhead on every call.
 - **`reasoning` before the labels** in the schema — the model commits to an explanation first; it also makes failures debuggable.
 - **Queue mapping in code**, not in the prompt — business rules change without re-prompting.
 - **System prompt cached**, ticket last — stable prefix. (Caching only kicks in above the model's minimum prefix size; check `cache_read_input_tokens`.)
@@ -35,6 +36,8 @@ uv run python eval.py detailed    # after
 |---|---|---|---|
 | minimal | 22/22 | 21/22 | 17.6k |
 | detailed | 22/22 | 22/22 | 23.3k (+33 %) |
+
+Switching from a forced tool call to `messages.parse` (2026-10-27, detailed prompt): still 22/22 · 22/22, input tokens **23.3k → 13.4k**, since there's no tool definition and no tool-use overhead per call.
 
 Lessons: a strong model gets most labels right with almost no prompt — the first 16 tickets scored 100 % with *both* prompts, so the dataset couldn't tell them apart. **An eval is only useful if it's hard enough to discriminate.** The detailed prompt fixes the urgency judgement (T15) at a token cost — a trade-off to state, not hide. The ~1k-token system prompt is just below the cacheable minimum (`cache_read = 0`); grow it with examples and caching starts paying.
 

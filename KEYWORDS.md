@@ -47,7 +47,7 @@ One line per term. Grouped the way Anthropic talks about them. **Where** points 
 | **`is_error`** | Flag on a `tool_result` that tells the model the call failed, so it can recover. | [02](concepts/02_agentic_loop/) |
 | **`tool_choice`** | `auto` / `any` / `tool` / `none`: how strongly to force tool use. | [03/03](concepts/03_tool_design/03_tool_choice/) |
 | **Strict tool use** | `strict: true`: tool inputs are guaranteed to match the schema. | [03](concepts/03_tool_design/) |
-| **Structured outputs** | `output_config.format` JSON schema: the response is guaranteed to match it. | [03](concepts/03_tool_design/) |
+| **Structured outputs** | `output_config.format` JSON schema (Python: `client.messages.parse(output_format=PydanticModel)`): the response is guaranteed to match it. Replaces the forced-tool-call trick. | [03](concepts/03_tool_design/) |
 | **Least privilege / scoped tools** | Each role gets only the 4–5 tools it needs; constrained tools over generic ones. | [03/03](concepts/03_tool_design/03_tool_choice/) |
 | **MCP (Model Context Protocol)** | Open protocol to expose tools/resources to any agent. | [03](concepts/03_tool_design/) |
 | **MCP connector** | Call remote MCP servers directly from the Messages API (`mcp_servers` + `mcp_toolset`). | [03](concepts/03_tool_design/) |

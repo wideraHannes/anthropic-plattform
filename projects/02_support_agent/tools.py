@@ -6,15 +6,18 @@ Rules that matter for money live HERE, in code — not in the system prompt:
 - one refund per order, never more than the order amount,
 - above AUTO_REFUND_LIMIT the agent must escalate to a human.
 
-Errors are returned as structured results (errorCategory / isRetryable), so
-the model can tell "fix your input" from "escalate".
+Errors are raised as `ToolError` with a structured body (errorCategory /
+isRetryable): the Tool Runner sends them back with `is_error: true`, and the
+model can tell "fix your input" from "escalate".
 """
 
 import json
 from dataclasses import dataclass, field
+from typing import Annotated
 
 from anthropic import beta_tool
-from pydantic import BaseModel, Field, ValidationError
+from anthropic.lib.tools import ToolError
+from pydantic import Field
 
 from data import CUSTOMERS, KB, ORDERS
 
@@ -37,8 +40,8 @@ def reset_session() -> None:
     session.__init__()
 
 
-def _error(category: str, retryable: bool, description: str) -> str:
-    return json.dumps({"isError": True, "errorCategory": category, "isRetryable": retryable, "description": description})
+def _error(category: str, retryable: bool, description: str) -> ToolError:
+    return ToolError(json.dumps({"errorCategory": category, "isRetryable": retryable, "description": description}))
 
 
 @beta_tool
@@ -54,7 +57,7 @@ def verify_customer(email: str, zip_code: str) -> str:
     record = CUSTOMERS.get(email.strip().lower())
     if not record or record["zip"] != zip_code.strip():
         session.events.append(f"verify_failed {email}")
-        return _error("validation", True, "Email and postal code do not match an account. Ask the customer to check them.")
+        raise _error("validation", True, "Email and postal code do not match an account. Ask the customer to check them.")
     session.verified_customer_id = record["id"]
     session.events.append(f"verified {record['id']}")
     return json.dumps({"customer_id": record["id"], "name": record["name"], "verified": True})
@@ -71,9 +74,9 @@ def lookup_order(order_id: str) -> str:
     """
     order = ORDERS.get(order_id.strip().upper())
     if not order:
-        return _error("validation", True, f"No order {order_id}. Ask the customer for the correct order ID.")
+        raise _error("validation", True, f"No order {order_id}. Ask the customer for the correct order ID.")
     if order["customer_id"] != session.verified_customer_id:
-        return _error("permission", False, "Order does not belong to the verified customer (or nobody is verified yet).")
+        raise _error("permission", False, "Order does not belong to the verified customer (or nobody is verified yet).")
     session.events.append(f"lookup {order_id}")
     return json.dumps({"order_id": order_id, **order})
 
@@ -108,34 +111,30 @@ def process_refund(order_id: str, amount: float, reason: str) -> str:
     # Deterministic gates — the model cannot talk its way past these.
     if session.verified_customer_id is None:
         session.events.append(f"BLOCKED refund {order_id}: unverified")
-        return _error("permission", False, "Customer not verified. Call verify_customer first.")
+        raise _error("permission", False, "Customer not verified. Call verify_customer first.")
     if not order or order["customer_id"] != session.verified_customer_id:
         session.events.append(f"BLOCKED refund {order_id}: not owner")
-        return _error("permission", False, "Order does not belong to the verified customer.")
+        raise _error("permission", False, "Order does not belong to the verified customer.")
     if order_id in session.refunds:
         session.events.append(f"BLOCKED refund {order_id}: duplicate")
-        return _error("business", False, "This order was already refunded.")
+        raise _error("business", False, "This order was already refunded.")
     if amount <= 0 or amount > order["amount"]:
-        return _error("validation", True, f"Amount must be between 0 and {order['amount']}.")
+        raise _error("validation", True, f"Amount must be between 0 and {order['amount']}.")
     if amount > AUTO_REFUND_LIMIT:
         session.events.append(f"BLOCKED refund {order_id}: over limit")
-        return _error("business", False, f"Refunds above EUR {AUTO_REFUND_LIMIT:.0f} need a human. Use escalate_to_human.")
+        raise _error("business", False, f"Refunds above EUR {AUTO_REFUND_LIMIT:.0f} need a human. Use escalate_to_human.")
     session.refunds[order_id] = amount
     session.events.append(f"refunded {order_id} {amount:.2f}")
     return json.dumps({"status": "refunded", "order_id": order_id, "amount": amount})
 
 
-class Handoff(BaseModel):
-    customer_id: str = Field(min_length=3)
-    conversation_summary: str = Field(min_length=20)
-    root_cause: str = Field(min_length=5)
-    refund_amount: float = Field(ge=0)
-    recommended_action: str = Field(min_length=5)
-
-
 @beta_tool
 def escalate_to_human(
-    customer_id: str, conversation_summary: str, root_cause: str, refund_amount: float, recommended_action: str
+    customer_id: Annotated[str, Field(min_length=3)],
+    conversation_summary: Annotated[str, Field(min_length=20)],
+    root_cause: Annotated[str, Field(min_length=5)],
+    refund_amount: Annotated[float, Field(ge=0)],
+    recommended_action: Annotated[str, Field(min_length=5)],
 ) -> str:
     """Hand the case to a human agent. Use for refunds above EUR 150, angry or
     repeated complaints, or anything you cannot resolve. The human will NOT see
@@ -148,17 +147,15 @@ def escalate_to_human(
         refund_amount: Requested refund in EUR, 0 if none.
         recommended_action: What the human should do next.
     """
-    try:
-        handoff = Handoff(
-            customer_id=customer_id,
-            conversation_summary=conversation_summary,
-            root_cause=root_cause,
-            refund_amount=refund_amount,
-            recommended_action=recommended_action,
-        )
-    except ValidationError as e:
-        return _error("validation", True, f"Incomplete handoff: {e.errors()[0]['msg']}")
-    session.handoffs.append(handoff.model_dump())
+    # Arguments are validated against the Field constraints before we get here.
+    handoff = {
+        "customer_id": customer_id,
+        "conversation_summary": conversation_summary,
+        "root_cause": root_cause,
+        "refund_amount": refund_amount,
+        "recommended_action": recommended_action,
+    }
+    session.handoffs.append(handoff)
     session.events.append(f"escalated {customer_id} {refund_amount:.2f}")
     return json.dumps({"status": "escalated", "ticket": f"H-{len(session.handoffs):03d}"})
 

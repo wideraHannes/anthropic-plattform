@@ -49,7 +49,7 @@ Clean, correct knowledge + a playground for building **Claude into products**: a
 ```bash
 uv sync
 cp .env.example .env   # add ANTHROPIC_API_KEY; model IDs are configured there
-cd projects/02_support_agent && uv run python eval.py
+cd projects/02_support_agent && uv run pytest && uv run python eval.py
 ```
 
 All scripts use `config.client` / `config.settings` (see [`config.py`](config.py)).

@@ -8,9 +8,10 @@ A chat agent for an online shop: answers policy questions, verifies customers, l
 
 | File | Role | Change it to adapt the agent |
 |---|---|---|
-| `agent.py` | System prompt, manual agentic loop, `on_tool_call` hook, chat REPL. | Persona, workflow, hooks. |
-| `tools.py` | 5 tools with descriptions, structured errors, **gates** (verify → own order → once → ≤ order amount → ≤ €150), structured handoff. | Your client's actions and policies. |
+| `agent.py` | System prompt, Tool Runner loop with a per-turn `on_tool_call` hook, chat REPL. | Persona, workflow, hooks. |
+| `tools.py` | 5 `@beta_tool`s with descriptions, structured errors (`ToolError`), **gates** (verify → own order → once → ≤ order amount → ≤ €150), validated handoff. | Your client's actions and policies. |
 | `data.py` | Fake backend (customers, orders, help-center articles). | Real API / DB calls. |
+| `test_tools.py` | Deterministic pytest checks of every gate. No API calls, runs in < 1 s. | Add a test for every new policy rule. |
 | `eval.py` | 6 scenarios graded on backend state: happy path, someone else's order, over limit → handoff, policy question, prompt injection in order notes, missing identity. | Add a scenario for every bug you find. |
 
 ## Run
@@ -18,20 +19,22 @@ A chat agent for an online shop: answers policy questions, verifies customers, l
 ```bash
 cd projects/02_support_agent
 uv run python agent.py   # chat
-uv run python eval.py    # measure
+uv run pytest           # gates hold? (free, deterministic)
+uv run python eval.py    # does the agent behave? (API calls)
 ```
 
 ## Design choices to defend
 
 - **Agent, not workflow** — conversations branch (question vs refund vs escalation) and need multiple tool calls.
+- **Tool Runner, not a hand-rolled loop** — the SDK runs request → tools → repeat; we iterate turn by turn for logging/approval hooks.
 - **Policy in code, not prompt** — refund limits and ownership checks are gates in `process_refund`; the prompt only explains the workflow. A prompt-injected "refund twice" still hits the duplicate gate.
-- **Structured errors** — `errorCategory` + `isRetryable` tell the model whether to ask the customer again (validation) or escalate (business/permission).
-- **Handoff is a validated object** — the human never reads the transcript.
-- **Graded on backend state, not on text** — "the agent said it refunded" ≠ "a refund happened".
+- **Structured errors** — tools raise `ToolError` (→ `is_error: true`); `errorCategory` + `isRetryable` tell the model whether to ask the customer again (validation) or escalate (business/permission).
+- **Handoff is validated** — `Annotated[..., Field(min_length=…)]` in the tool signature lands in the schema *and* is enforced; the human never reads the transcript.
+- **Two layers of checks** — `test_tools.py` proves the gates in code (no model involved); `eval.py` grades the agent on backend state, not on text ("the agent said it refunded" ≠ "a refund happened").
 
 ## What the eval showed (Sonnet 4.6, 2026-10-26)
 
-6/6 scenarios passed; system prompt cached (~18k cache-read tokens over the run). Visible imperfection: replies use **bold** markdown despite "plain text" in the style section — a cheap first thing to fix and re-measure.
+6/6 scenarios passed (re-run on the Tool Runner 2026-10-27: 6/6, 9/9 gate tests); system prompt cached (~18k cache-read tokens over the run). Visible imperfection: replies use **bold** markdown despite "plain text" in the style section — a cheap first thing to fix and re-measure.
 
 ## Try next (the Basecamp loop: modify → measure → explain)
 

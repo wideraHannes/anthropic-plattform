@@ -1,11 +1,11 @@
 """
-Customer support agent — a hand-rolled agentic loop you can read in one sitting.
+Customer support agent — the SDK's Tool Runner drives the agentic loop.
 
     uv run python agent.py            # interactive chat
 
-Why a manual loop instead of the Tool Runner: every turn passes through
-`on_tool_call`, which is the place to add logging, approval, or policy hooks
-when you adapt this agent for a client.
+The runner calls the API, executes the @beta_tool functions and loops until
+Claude answers. We iterate over it turn by turn: that is the place for logging,
+approval or policy hooks when you adapt this agent for a client.
 """
 
 import json
@@ -33,8 +33,7 @@ You help customers with orders, refunds and policy questions via chat.
 Friendly, concise, plain text. Never promise anything the tools didn't confirm.
 </style>"""
 
-TOOL_BY_NAME = {t.name: t for t in TOOLS}
-TOOL_DEFS = [t.to_dict() for t in TOOLS]
+USAGE_KEYS = ("input_tokens", "output_tokens", "cache_read_input_tokens")
 
 
 def on_tool_call(name: str, args: dict) -> None:
@@ -42,42 +41,34 @@ def on_tool_call(name: str, args: dict) -> None:
     print(f"  [tool] {name}({json.dumps(args, ensure_ascii=False)})")
 
 
-def run_tool(block) -> dict:
-    on_tool_call(block.name, block.input)
-    try:
-        output = TOOL_BY_NAME[block.name].call(block.input)
-        is_error = '"isError": true' in output
-    except Exception as e:  # bad arguments, unknown tool, ...
-        output, is_error = f"Tool failed: {e}", True
-    return {"type": "tool_result", "tool_use_id": block.id, "content": output, "is_error": is_error}
-
-
 def run_turn(messages: list) -> tuple[str, dict]:
-    """Run the loop until Claude answers the user. Mutates `messages`.
+    """Run the loop until Claude answers the user. Appends the turn to `messages`.
 
     Returns the reply text and summed token usage for this turn.
     """
-    usage = {"input_tokens": 0, "output_tokens": 0, "cache_read_input_tokens": 0}
-    for _ in range(MAX_STEPS):
-        response = client.messages.create(
-            model=settings.default_model,
-            max_tokens=2048,
-            system=[{"type": "text", "text": SYSTEM, "cache_control": {"type": "ephemeral"}}],
-            tools=TOOL_DEFS,
-            messages=messages,
-        )
+    runner = client.beta.messages.tool_runner(
+        model=settings.default_model,
+        max_tokens=2048,
+        max_iterations=MAX_STEPS,
+        system=[{"type": "text", "text": SYSTEM, "cache_control": {"type": "ephemeral"}}],
+        tools=TOOLS,
+        messages=list(messages),
+    )
+    usage = dict.fromkeys(USAGE_KEYS, 0)
+    for message in runner:
         for k in usage:
-            usage[k] += getattr(response.usage, k) or 0
-        messages.append({"role": "assistant", "content": response.content})
+            usage[k] += getattr(message.usage, k) or 0
+        messages.append({"role": "assistant", "content": message.content})
+        for block in message.content:
+            if block.type == "tool_use":
+                on_tool_call(block.name, block.input)
+        # Runs the tools (the runner reuses this result); None when Claude is done.
+        if tool_results := runner.generate_tool_call_response():
+            messages.append(tool_results)
 
-        if response.stop_reason != "tool_use":
-            reply = "".join(b.text for b in response.content if b.type == "text")
-            return reply, usage
-
-        results = [run_tool(b) for b in response.content if b.type == "tool_use"]
-        messages.append({"role": "user", "content": results})
-
-    return "Sorry, I couldn't finish this request. A colleague will follow up.", usage
+    if message.stop_reason == "tool_use":  # max_iterations hit mid-task
+        return "Sorry, I couldn't finish this request. A colleague will follow up.", usage
+    return "".join(b.text for b in message.content if b.type == "text"), usage
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 """
 Ticket router: classify a support ticket into intent + urgency, then map it to a queue.
 
-Pattern: single LLM call with structured output (forced tool call). No agent —
+Pattern: single LLM call with structured output (`messages.parse`). No agent —
 the path is fixed, so a workflow is cheaper and easier to test.
 
 Two prompt versions live in PROMPTS so eval.py can measure before/after:
@@ -69,28 +69,20 @@ ticket means a customer waits a day, so judge urgency carefully.
 }
 
 
-def classify(ticket: str, prompt: str = "detailed") -> tuple[Routing, object]:
-    """Return the routing decision and the raw API usage."""
-    tool = {
-        "name": "route_ticket",
-        "description": "Record the routing decision for this ticket.",
-        "input_schema": Routing.model_json_schema(),
-    }
-    response = client.messages.create(
+def classify(ticket: str, prompt: str = "detailed"):
+    """Return the API response; `.parsed_output` is a validated `Routing`."""
+    return client.messages.parse(
         model=settings.default_model,
         max_tokens=512,
-        # Stable prefix (tools + system) first, cached; the ticket comes last.
+        # Stable prefix (system) first, cached; the ticket comes last.
         system=[{"type": "text", "text": PROMPTS[prompt], "cache_control": {"type": "ephemeral"}}],
-        tools=[tool],
-        tool_choice={"type": "tool", "name": "route_ticket"},
         messages=[{"role": "user", "content": f"<ticket>\n{ticket}\n</ticket>"}],
+        output_format=Routing,
     )
-    tool_use = next(b for b in response.content if b.type == "tool_use")
-    return Routing.model_validate(tool_use.input), response.usage
 
 
 if __name__ == "__main__":
     text = " ".join(sys.argv[1:]) or "I was charged twice and can't log in to check."
-    routing, _ = classify(text)
+    routing = classify(text).parsed_output
     print(routing.model_dump_json(indent=2))
     print("queue:", QUEUES[(routing.intent, routing.urgency)])

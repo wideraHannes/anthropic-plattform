@@ -46,18 +46,16 @@ class WorkerReport(BaseModel):
 USAGE: dict[str, dict[str, int]] = {}
 
 
-def _structured(role: str, system: str, prompt: str, schema: type[BaseModel]) -> BaseModel:
-    tool = {"name": "submit", "description": f"Submit the {role} result.", "input_schema": schema.model_json_schema()}
-    response = client.messages.create(
+def _structured[T: BaseModel](role: str, system: str, prompt: str, schema: type[T]) -> T:
+    response = client.messages.parse(
         model=settings.default_model,
         max_tokens=4096,
         system=system,
-        tools=[tool],
-        tool_choice={"type": "tool", "name": "submit"},
         messages=[{"role": "user", "content": prompt}],
+        output_format=schema,
     )
     _track(role, response.usage)
-    return schema.model_validate(next(b for b in response.content if b.type == "tool_use").input)
+    return response.parsed_output
 
 
 def _track(role: str, usage) -> None:
