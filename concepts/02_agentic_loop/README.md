@@ -2,8 +2,6 @@
 
 > An agent is just an LLM using tools in a loop: `while stop_reason == "tool_use": run tools → append results → call again`.
 
-Basecamp: *Developer Platform*, *Hackathon · Agent Build*.
-
 ## Core rules
 
 1. **The API is stateless.** All state lives in the `messages` list you resend each turn.

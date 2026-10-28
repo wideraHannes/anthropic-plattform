@@ -18,6 +18,8 @@ structured outputs (`client.messages.parse`) instead of a tool at all.
 
 from typing import Any
 
+import anthropic
+
 from config import client, settings
 
 
@@ -47,16 +49,20 @@ PROMPT = "What is 2 + 2? Answer briefly."
 
 
 def run(label: str, tool_choice: dict[str, Any]) -> None:
-    resp = client.messages.create(
-        model=settings.default_model,
-        max_tokens=256,
-        tools=TOOLS,
-        tool_choice=tool_choice,
-        messages=[{"role": "user", "content": PROMPT}],
-    )
+    print(f"─── {label} (tool_choice={tool_choice}) ───")
+    try:
+        resp = client.messages.create(
+            model=settings.default_model,
+            max_tokens=256,
+            tools=TOOLS,
+            tool_choice=tool_choice,
+            messages=[{"role": "user", "content": PROMPT}],
+        )
+    except anthropic.BadRequestError as e:
+        print(f"  rejected    : {e.message}\n")
+        return
     picks = [b.name for b in resp.content if b.type == "tool_use"]
     prose = "".join(b.text for b in resp.content if b.type == "text").strip()
-    print(f"─── {label} (tool_choice={tool_choice}) ───")
     print(f"  stop_reason : {resp.stop_reason}")
     print(f"  tool picks  : {picks or '<none>'}")
     print(f"  prose       : {prose[:80]!r}\n")

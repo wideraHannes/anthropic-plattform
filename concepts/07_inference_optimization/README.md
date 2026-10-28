@@ -2,8 +2,6 @@
 
 > Optimise cost per *completed task*, not per request. Free wins first (caching, trimming, batching), trade-offs second (effort, model choice).
 
-Basecamp: *Inference Optimization*.
-
 ## The levers, in order
 
 | # | Lever | Effect | Notes |

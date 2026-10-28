@@ -2,8 +2,6 @@
 
 > Start with the simplest thing that works. Add steps only when they measurably help: single call → workflow (code decides the path) → agent (model decides the path) → multi-agent.
 
-Basecamp: *Hackathon · Agent Build*, *Defend the design choices*.
-
 ## The patterns (from "Building effective agents")
 
 | Pattern | Code controls | Use when |

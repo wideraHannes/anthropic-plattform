@@ -2,8 +2,6 @@
 
 > Everything in the client SDK is one endpoint, `POST /v1/messages`. `create`, `stream`, `parse` and `tool_runner` are helpers on top of it.
 
-Basecamp: *Developer Platform*.
-
 ## Core rules
 
 1. **Start with the lowest surface that solves the problem.** Single call → structured output → tools → agent harness.

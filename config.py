@@ -2,7 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 
 import anthropic
-from pydantic import Field, SecretStr
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ENV_PATH = Path(__file__).parent / ".env"
@@ -16,12 +16,12 @@ class Settings(BaseSettings):
     )
 
     anthropic_api_key: SecretStr
-    anthropic_base_url: str = "https://router.eu.requesty.ai"
+    anthropic_base_url: str | None = None  # None → api.anthropic.com
 
-    model_sonnet: str = Field(default="vertex/claude-sonnet-4-6@europe-west1")
-    model_opus: str = Field(default="vertex/claude-opus-4-7@europe-west1")
-    model_haiku: str = Field(default="vertex/claude-haiku-4-5@europe-west1")
-    default_model: str = Field(default="vertex/claude-sonnet-4-6@europe-west1")
+    model_sonnet: str = "claude-sonnet-5-5"
+    model_haiku: str = "claude-haiku-5-5"
+    model_opus: str = "claude-opus-5-5"
+    default_model: str = "claude-sonnet-5-5"
 
 
 @lru_cache

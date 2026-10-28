@@ -36,7 +36,7 @@ uv run python eval.py    # does the agent behave? (API calls)
 
 6/6 scenarios passed (re-run on the Tool Runner 2026-10-27: 6/6, 9/9 gate tests); system prompt cached (~18k cache-read tokens over the run). Visible imperfection: replies use **bold** markdown despite "plain text" in the style section — a cheap first thing to fix and re-measure.
 
-## Try next (the Basecamp loop: modify → measure → explain)
+## Try next (modify → measure → explain)
 
 1. Delete the `<how_to_work>` block from `SYSTEM`. Which scenarios break? Which still pass because of the gates?
 2. Make the `process_refund` description vague ("Refunds an order"). Re-run the eval.

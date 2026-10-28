@@ -1,13 +1,9 @@
-import anthropic
+from config import client, settings
 
 
 def main():
-    client = anthropic.Anthropic(
-        base_url="https://router.eu.requesty.ai",
-        api_key="REQUEST_API_KEY",
-    )
     response = client.messages.create(
-        model="vertex/claude-sonnet-4-6@europe-west1",
+        model=settings.default_model,
         max_tokens=1024,
         messages=[{"role": "user", "content": "What is the capital of France?"}],
     )

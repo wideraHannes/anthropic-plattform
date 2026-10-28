@@ -2,8 +2,6 @@
 
 > Tools are the agent's UI. Spend as much care on tool names, descriptions and errors as you would on a human-facing API — Claude only sees `name + description + input_schema`.
 
-Basecamp: *Read and modify an unfamiliar agent's tool definitions*.
-
 ## Core rules
 
 1. **Description = routing signal.** Purpose, inputs, 1–3 example uses, limits, and explicit boundaries to sibling tools ("use `lookup_order` for order IDs, not this").

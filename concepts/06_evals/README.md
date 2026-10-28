@@ -2,8 +2,6 @@
 
 > If you can't measure it, you can't improve it — and you can't defend it to a customer. An eval is a fixed set of inputs + a grader + a number you compare before and after a change.
 
-Basecamp: *Evals · Pres + Colab*, outcome *"measure the agent before and after your changes and explain the difference"*.
-
 ## Core rules
 
 1. **Define success criteria first** — specific, measurable, tied to the use case (accuracy ≥ 90 %, never refund unverified, p95 latency < 3 s, cost per ticket < $0.01).

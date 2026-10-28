@@ -2,8 +2,6 @@
 
 > Prompts are probabilistic, code is deterministic. When a mistake costs money, security or compliance, move the rule out of the prompt and into code.
 
-Basecamp: *Defend the design choices to a technical buyer*.
-
 ## The determinism ladder
 
 | Rung | Mechanism | Reliability | Use for |

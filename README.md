@@ -1,21 +1,38 @@
 # Building Agentic Systems with Claude
 
-Clean, correct knowledge + a playground for building **Claude into products**: agents, workflows, multi-agent systems. Preparation for **Anthropic Partner Basecamp**: build an agent end to end, modify an unfamiliar one, measure before/after, defend the design.
+A knowledge base for the Claude Developer Platform: one concept per folder, small runnable scripts, end-to-end projects with evals.
 
-## Map
+## Setup
 
-| Folder / file                | What                                                                           |
-| ---------------------------- | ------------------------------------------------------------------------------ |
-| [`KEYWORDS.md`](KEYWORDS.md) | Anthropic's vocabulary in one page (hub-and-spoke, ACI, context rot, pass^k …) |
-| [`concepts/`](concepts/)     | The ideas, one folder each, with small runnable scripts                        |
-| [`projects/`](projects/)     | End-to-end examples applying the concepts, each with an `eval.py`              |
-| [`exam/`](exam/)             | Cert exam guide                                                                |
+```bash
+uv sync
+cp .env.example .env
+```
+
+- **Claude API:** set `ANTHROPIC_API_KEY`. That's it.
+- **Gateway / external provider:** also uncomment `ANTHROPIC_BASE_URL` and the `MODEL_*` IDs in `.env`.
+
+All code uses `config.client` / `config.settings` ([`config.py`](config.py)). Default model: Claude Sonnet 5.5.
+
+## Start here: [`api_surfaces.ipynb`](concepts/01_api_surfaces/api_surfaces.ipynb)
+
+| #   | Surface           | Call                                              | Use when                           |
+| --- | ----------------- | ------------------------------------------------- | ---------------------------------- |
+| 1   | Plain call        | `client.messages.create`                          | One request, one answer            |
+| 2   | Streaming         | `client.messages.stream`                          | Long output, live UI               |
+| 3   | Structured output | `client.messages.parse(output_format=Model)`      | Code consumes the answer           |
+| 4   | Manual tool loop  | `stop_reason == "tool_use"` → `tool_result`       | Understanding what the runner does |
+| 5   | Tool Runner       | `client.beta.messages.tool_runner` + `@beta_tool` | Custom tools (default)             |
+
+```bash
+cd concepts/01_api_surfaces && uv run --with jupyter jupyter lab api_surfaces.ipynb
+```
 
 ## Concepts
 
 | #                                            | Concept                 | One-liner                                                              |
 | -------------------------------------------- | ----------------------- | ---------------------------------------------------------------------- |
-| [01](concepts/01_api_surfaces/)              | API surfaces            | `create` → `stream` → `parse` → manual loop → Tool Runner, in one notebook. |
+| [01](concepts/01_api_surfaces/)              | API surfaces            | `create` → `stream` → `parse` → manual loop → Tool Runner.             |
 | [02](concepts/02_agentic_loop/)              | The agentic loop        | `stop_reason == "tool_use"` → run tools → repeat. Pick the build path. |
 | [03](concepts/03_tool_design/)               | Tool design             | Tools are the agent's UI: descriptions, schemas, structured errors.    |
 | [04](concepts/04_workflows_and_multi_agent/) | Workflows & multi-agent | Chaining, routing, parallel, orchestrator–workers, hub-and-spoke.      |
@@ -25,32 +42,20 @@ Clean, correct knowledge + a playground for building **Claude into products**: a
 
 ## Projects
 
-| #                                       | Project                                                   | Pattern                                                                            | Concepts          |
-| --------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------- | ----------------- |
-| [01](projects/01_ticket_routing/)       | Ticket routing                                            | Routing workflow, structured output                                                | 04 · 06 · 07      |
-| [02](projects/02_support_agent/)        | Customer support agent (**reusable starter**)             | Single agent + gated tools + handoff                                               | 02 · 03 · 05 · 06 |
-| [03](projects/03_research_multi_agent/) | Multi-agent research                                      | Orchestrator–workers, parallel, gap review, cited synthesis                        | 04 · 06           |
-| [4D](projects/4D_framework/)            | Clinic wait time, built along the 4D AI Fluency framework | Delegation → Description → Discernment → Diligence; tests as description, UX audit | –                 |
+Each project has a `README.md` (design choices, eval results, what to try next) and an `eval.py`.
 
-## Basecamp agenda → where to prepare
-
-| Session                        | Prepare with                                                          |
-| ------------------------------ | --------------------------------------------------------------------- |
-| Developer Platform             | Concepts 02, 03 · project 01                                          |
-| Protocols / Prompt Rescue      | Project 01 `eval.py minimal` vs `detailed`                            |
-| Diagnosing AI Problems         | Read the FAIL lines and transcripts of every `eval.py`                |
-| Delivering the Claude Demo     | Project 02: chat demo + eval numbers                                  |
-| Evals                          | Concept 06 · every project's `eval.py`                                |
-| Inference Optimization         | Concept 07 (`prompt_caching.py`) · token/latency output of project 01 |
-| Workshop · Context Engineering | Project 03 · context terms in [`KEYWORDS.md`](KEYWORDS.md)            |
-| Hackathon · Agent Build        | Project 02 as the starter; patterns from concept 04                   |
-
-## Setup
+| #                                       | Project                                       | Pattern                                                     | Concepts          |
+| --------------------------------------- | --------------------------------------------- | ----------------------------------------------------------- | ----------------- |
+| [01](projects/01_ticket_routing/)       | Ticket routing                                | Routing workflow, structured output                         | 04 · 06 · 07      |
+| [02](projects/02_support_agent/)        | Customer support agent (**reusable starter**) | Single agent + gated tools + handoff                        | 02 · 03 · 05 · 06 |
+| [03](projects/03_research_multi_agent/) | Multi-agent research                          | Orchestrator–workers, parallel, gap review, cited synthesis | 04 · 06           |
+| [4D](projects/4D_framework/)            | Clinic wait time, along the 4D AI Fluency framework | Delegation → Description → Discernment → Diligence    | –                 |
 
 ```bash
-uv sync
-cp .env.example .env   # add ANTHROPIC_API_KEY; model IDs are configured there
 cd projects/02_support_agent && uv run pytest && uv run python eval.py
 ```
 
-All scripts use `config.client` / `config.settings` (see [`config.py`](config.py)).
+## Reference
+
+- [`KEYWORDS.md`](KEYWORDS.md) — Anthropic's vocabulary on one page (ACI, context rot, hub-and-spoke, pass^k …)
+- [`exam/`](exam/ccaf_exam_guide.pdf) — Claude Certified Architect exam guide (PDF)
