@@ -40,7 +40,7 @@ def reset_session() -> None:
     session.__init__()
 
 
-def _error(category: str, retryable: bool, description: str) -> ToolError:
+def tool_error(category: str, retryable: bool, description: str) -> ToolError:
     return ToolError(json.dumps({"errorCategory": category, "isRetryable": retryable, "description": description}))
 
 
@@ -57,7 +57,7 @@ def verify_customer(email: str, zip_code: str) -> str:
     record = CUSTOMERS.get(email.strip().lower())
     if not record or record["zip"] != zip_code.strip():
         session.events.append(f"verify_failed {email}")
-        raise _error("validation", True, "Email and postal code do not match an account. Ask the customer to check them.")
+        raise tool_error("validation", True, "Email and postal code do not match an account. Ask the customer to check them.")
     session.verified_customer_id = record["id"]
     session.events.append(f"verified {record['id']}")
     return json.dumps({"customer_id": record["id"], "name": record["name"], "verified": True})
@@ -74,9 +74,9 @@ def lookup_order(order_id: str) -> str:
     """
     order = ORDERS.get(order_id.strip().upper())
     if not order:
-        raise _error("validation", True, f"No order {order_id}. Ask the customer for the correct order ID.")
+        raise tool_error("validation", True, f"No order {order_id}. Ask the customer for the correct order ID.")
     if order["customer_id"] != session.verified_customer_id:
-        raise _error("permission", False, "Order does not belong to the verified customer (or nobody is verified yet).")
+        raise tool_error("permission", False, "Order does not belong to the verified customer (or nobody is verified yet).")
     session.events.append(f"lookup {order_id}")
     return json.dumps({"order_id": order_id, **order})
 
@@ -111,18 +111,18 @@ def process_refund(order_id: str, amount: float, reason: str) -> str:
     # Deterministic gates — the model cannot talk its way past these.
     if session.verified_customer_id is None:
         session.events.append(f"BLOCKED refund {order_id}: unverified")
-        raise _error("permission", False, "Customer not verified. Call verify_customer first.")
+        raise tool_error("permission", False, "Customer not verified. Call verify_customer first.")
     if not order or order["customer_id"] != session.verified_customer_id:
         session.events.append(f"BLOCKED refund {order_id}: not owner")
-        raise _error("permission", False, "Order does not belong to the verified customer.")
+        raise tool_error("permission", False, "Order does not belong to the verified customer.")
     if order_id in session.refunds:
         session.events.append(f"BLOCKED refund {order_id}: duplicate")
-        raise _error("business", False, "This order was already refunded.")
+        raise tool_error("business", False, "This order was already refunded.")
     if amount <= 0 or amount > order["amount"]:
-        raise _error("validation", True, f"Amount must be between 0 and {order['amount']}.")
+        raise tool_error("validation", True, f"Amount must be between 0 and {order['amount']}.")
     if amount > AUTO_REFUND_LIMIT:
         session.events.append(f"BLOCKED refund {order_id}: over limit")
-        raise _error("business", False, f"Refunds above EUR {AUTO_REFUND_LIMIT:.0f} need a human. Use escalate_to_human.")
+        raise tool_error("business", False, f"Refunds above EUR {AUTO_REFUND_LIMIT:.0f} need a human. Use escalate_to_human.")
     session.refunds[order_id] = amount
     session.events.append(f"refunded {order_id} {amount:.2f}")
     return json.dumps({"status": "refunded", "order_id": order_id, "amount": amount})

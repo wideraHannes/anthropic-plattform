@@ -36,11 +36,6 @@ Friendly, concise, plain text. Never promise anything the tools didn't confirm.
 USAGE_KEYS = ("input_tokens", "output_tokens", "cache_read_input_tokens")
 
 
-def on_tool_call(name: str, args: dict) -> None:
-    """Per-call hook. Logging only for now — add approval / policy checks here."""
-    print(f"  [tool] {name}({json.dumps(args, ensure_ascii=False)})")
-
-
 def run_turn(messages: list) -> tuple[str, dict]:
     """Run the loop until Claude answers the user. Appends the turn to `messages`.
 
@@ -60,8 +55,8 @@ def run_turn(messages: list) -> tuple[str, dict]:
             usage[k] += getattr(message.usage, k) or 0
         messages.append({"role": "assistant", "content": message.content})
         for block in message.content:
-            if block.type == "tool_use":
-                on_tool_call(block.name, block.input)
+            if block.type == "tool_use":  # hook point: logging now, approval / policy checks later
+                print(f"  [tool] {block.name}({json.dumps(block.input, ensure_ascii=False)})")
         # Runs the tools (the runner reuses this result); None when Claude is done.
         if tool_results := runner.generate_tool_call_response():
             messages.append(tool_results)

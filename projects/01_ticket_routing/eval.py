@@ -20,7 +20,7 @@ TICKETS = json.loads((Path(__file__).parent / "tickets.json").read_text())
 USAGE_KEYS = ("input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens")
 
 
-def run_one(ticket: dict, prompt: str) -> tuple[dict, object, float]:
+def classify_timed(ticket: dict, prompt: str) -> tuple[dict, object, float]:
     start = time.perf_counter()
     response = classify(ticket["text"], prompt)
     return ticket, response, time.perf_counter() - start
@@ -28,7 +28,7 @@ def run_one(ticket: dict, prompt: str) -> tuple[dict, object, float]:
 
 def main(prompt: str) -> None:
     with ThreadPoolExecutor(max_workers=8) as pool:
-        results = list(pool.map(lambda t: run_one(t, prompt), TICKETS))
+        results = list(pool.map(lambda t: classify_timed(t, prompt), TICKETS))
 
     intent_ok = urgency_ok = 0
     for ticket, response, _ in results:

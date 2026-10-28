@@ -15,6 +15,7 @@ Clean, correct knowledge + a playground for building **Claude into products**: a
 
 | #                                            | Concept                 | One-liner                                                              |
 | -------------------------------------------- | ----------------------- | ---------------------------------------------------------------------- |
+| [01](concepts/01_api_surfaces/)              | API surfaces            | `create` → `stream` → `parse` → manual loop → Tool Runner, in one notebook. |
 | [02](concepts/02_agentic_loop/)              | The agentic loop        | `stop_reason == "tool_use"` → run tools → repeat. Pick the build path. |
 | [03](concepts/03_tool_design/)               | Tool design             | Tools are the agent's UI: descriptions, schemas, structured errors.    |
 | [04](concepts/04_workflows_and_multi_agent/) | Workflows & multi-agent | Chaining, routing, parallel, orchestrator–workers, hub-and-spoke.      |

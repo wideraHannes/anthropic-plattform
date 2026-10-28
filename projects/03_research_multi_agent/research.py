@@ -11,6 +11,7 @@ Context engineering is the point of this project — each role sees only what it
 """
 
 import sys
+from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -20,6 +21,11 @@ from config import client, settings
 
 CORPUS_DIR = Path(__file__).parent / "corpus"
 CORPUS = {p.stem: p.read_text() for p in sorted(CORPUS_DIR.glob("*.md"))}
+# One line per document: what the planner and reviewer see instead of the full text.
+CORPUS_INDEX = "\n".join(
+    f"- {name}: {next((l for l in text.splitlines() if l.startswith('Summary:')), '').removeprefix('Summary:').strip()}"
+    for name, text in CORPUS.items()
+)
 
 DEFAULT_QUESTION = "Should Acme enter the Nordic heat pump market in 2027, and if so, which country first?"
 
@@ -52,10 +58,10 @@ class WorkerReport(BaseModel):
     open_questions: list[str] = Field(default_factory=list, description="What the documents could not answer.")
 
 
-USAGE: dict[str, dict[str, int]] = {}
+USAGE: defaultdict[str, Counter] = defaultdict(Counter)  # role -> calls, input_tokens, output_tokens
 
 
-def _structured[T: BaseModel](role: str, system: str, prompt: str, schema: type[T]) -> T:
+def call_structured[T: BaseModel](role: str, system: str, prompt: str, schema: type[T]) -> T:
     response = client.messages.parse(
         model=settings.default_model,
         max_tokens=4096,
@@ -63,23 +69,8 @@ def _structured[T: BaseModel](role: str, system: str, prompt: str, schema: type[
         messages=[{"role": "user", "content": prompt}],
         output_format=schema,
     )
-    _track(role, response.usage)
+    USAGE[role].update(calls=1, input_tokens=response.usage.input_tokens, output_tokens=response.usage.output_tokens)
     return response.parsed_output
-
-
-def _track(role: str, usage) -> None:
-    u = USAGE.setdefault(role, {"calls": 0, "input_tokens": 0, "output_tokens": 0})
-    u["calls"] += 1
-    u["input_tokens"] += usage.input_tokens
-    u["output_tokens"] += usage.output_tokens
-
-
-def corpus_index() -> str:
-    lines = []
-    for name, text in CORPUS.items():
-        summary = next((l for l in text.splitlines() if l.startswith("Summary:")), "")
-        lines.append(f"- {name}: {summary.removeprefix('Summary:').strip()}")
-    return "\n".join(lines)
 
 
 def plan(question: str) -> Plan:
@@ -87,13 +78,13 @@ def plan(question: str) -> Plan:
 independent sub-questions that together cover it fully (market, product fit,
 competition, regulation, customers, money — whatever applies), and assign each
 the documents a researcher should read. You do not answer the question yourself."""
-    prompt = f"<question>{question}</question>\n\n<corpus_index>\n{corpus_index()}\n</corpus_index>"
-    result = _structured("planner", system, prompt, Plan)
-    result.sub_questions = _valid_docs(result.sub_questions)
+    prompt = f"<question>{question}</question>\n\n<corpus_index>\n{CORPUS_INDEX}\n</corpus_index>"
+    result = call_structured("planner", system, prompt, Plan)
+    result.sub_questions = drop_unknown_docs(result.sub_questions)
     return result
 
 
-def _valid_docs(sub_questions: list[SubQuestion]) -> list[SubQuestion]:
+def drop_unknown_docs(sub_questions: list[SubQuestion]) -> list[SubQuestion]:
     """Never trust model-chosen references blindly: keep only docs that exist."""
     for sq in sub_questions:
         sq.docs = [d for d in sq.docs if d in CORPUS]
@@ -107,9 +98,9 @@ questions that another document in the index could answer, write a follow-up
 sub-question and assign those documents. Ignore gaps the corpus cannot close."""
     prompt = (
         f"<question>{question}</question>\n\n<open_questions>\n{open_questions}\n</open_questions>\n\n"
-        f"<corpus_index>\n{corpus_index()}\n</corpus_index>"
+        f"<corpus_index>\n{CORPUS_INDEX}\n</corpus_index>"
     )
-    return _valid_docs(_structured("reviewer", system, prompt, Review).follow_ups)
+    return drop_unknown_docs(call_structured("reviewer", system, prompt, Review).follow_ups)
 
 
 def research(sub: SubQuestion) -> WorkerReport:
@@ -118,7 +109,7 @@ provided. Every finding must carry an exact quote copied from its document.
 If the documents do not answer something, list it under open_questions."""
     docs = "\n\n".join(f'<document name="{d}">\n{CORPUS[d]}\n</document>' for d in sub.docs)
     prompt = f"{docs}\n\n<sub_question>{sub.question}</sub_question>"
-    return _structured("worker", system, prompt, WorkerReport)
+    return call_structured("worker", system, prompt, WorkerReport)
 
 
 def synthesize(question: str, reports: list[tuple[SubQuestion, WorkerReport]]) -> str:
@@ -135,7 +126,7 @@ then the key reasons and the main risks. Use only the findings given and cite
 each fact with its [document] tag. Name what is still unknown.""",
         messages=[{"role": "user", "content": f"<question>{question}</question>\n\n" + "\n\n".join(blocks)}],
     )
-    _track("synthesizer", response.usage)
+    USAGE["synthesizer"].update(calls=1, input_tokens=response.usage.input_tokens, output_tokens=response.usage.output_tokens)
     return "".join(b.text for b in response.content if b.type == "text")
 
 
@@ -154,7 +145,7 @@ def run(question: str) -> dict:
         reports += list(pool.map(research, follow_ups))
     subs = subs + follow_ups
     brief = synthesize(question, list(zip(subs, reports)))
-    return {"plan": the_plan, "follow_ups": follow_ups, "reports": reports, "brief": brief, "usage": dict(USAGE)}
+    return {"plan": the_plan, "follow_ups": follow_ups, "reports": reports, "brief": brief, "usage": {role: dict(c) for role, c in USAGE.items()}}
 
 
 if __name__ == "__main__":

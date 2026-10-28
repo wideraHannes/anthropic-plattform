@@ -43,7 +43,7 @@ class Judgement(BaseModel):
     claims: list[Claim]
 
 
-def _norm(text: str) -> str:
+def normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip().lower()
 
 
@@ -64,7 +64,7 @@ def main() -> None:
     brief = result["brief"]
     findings = [f for r in result["reports"] for f in r.findings]
 
-    unfaithful = [f for f in findings if _norm(f.quote) not in _norm(CORPUS.get(f.doc, ""))]
+    unfaithful = [f for f in findings if normalize(f.quote) not in normalize(CORPUS.get(f.doc, ""))]
     claims = judge_brief(brief, findings)
     ungrounded = [c for c in claims if not c.supported]
     missing = [label for label, pattern in MUST_MENTION.items() if not re.search(pattern, brief, re.IGNORECASE)]

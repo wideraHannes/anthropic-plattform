@@ -64,16 +64,11 @@ def load_config(path: Path) -> dict:
 # --- estimate ---------------------------------------------------------------
 
 
-def wait_minutes(patients: int, minutes_per_patient: float) -> int:
-    """Estimated wait, rounded to the nearest 5 min."""
-    return int(patients * minutes_per_patient / 5 + 0.5) * 5
-
-
 def displayed_range(patients: int, minutes_per_patient: float) -> tuple[int, int | None]:
     """(low, high) in minutes; high is None for the open-ended long-wait case."""
     if patients <= 0:
         return 0, RANGE_WIDTH
-    wait = wait_minutes(patients, minutes_per_patient)
+    wait = int(patients * minutes_per_patient / 5 + 0.5) * 5  # rounded to the nearest 5 min
     if wait >= LONG_WAIT:
         return LONG_WAIT, None
     return wait, wait + RANGE_WIDTH
@@ -91,7 +86,7 @@ def format_wait(patients: int, minutes_per_patient: float) -> str:
 # --- opening hours ----------------------------------------------------------
 
 
-def _intervals(config: dict, day: date) -> list[tuple[datetime, datetime]]:
+def opening_intervals(config: dict, day: date) -> list[tuple[datetime, datetime]]:
     if day.isoformat() in config["holidays"]:
         return []
     tz = ZoneInfo(config["timezone"])
@@ -103,7 +98,7 @@ def _intervals(config: dict, day: date) -> list[tuple[datetime, datetime]]:
 
 def current_interval(config: dict, now: datetime) -> tuple[datetime, datetime] | None:
     now = now.astimezone(ZoneInfo(config["timezone"]))
-    for start, end in _intervals(config, now.date()):
+    for start, end in opening_intervals(config, now.date()):
         if start <= now < end:
             return start, end
     return None
@@ -112,7 +107,7 @@ def current_interval(config: dict, now: datetime) -> tuple[datetime, datetime] |
 def next_opening(config: dict, now: datetime) -> datetime | None:
     now = now.astimezone(ZoneInfo(config["timezone"]))
     for offset in range(15):
-        for start, _ in _intervals(config, now.date() + timedelta(days=offset)):
+        for start, _ in opening_intervals(config, now.date() + timedelta(days=offset)):
             if start > now:
                 return start
     return None

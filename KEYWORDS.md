@@ -31,7 +31,10 @@ One line per term. Grouped the way Anthropic talks about them. **Where** points 
 | **`tool_use` / `tool_result`** | Model's call block / your answer block, paired by `tool_use_id`. | [02](concepts/02_agentic_loop/) |
 | **Parallel tool use** | Several `tool_use` blocks in one turn; return all results in one user message. | [02](concepts/02_agentic_loop/) |
 | **Messages API** | `POST /v1/messages`, stateless; you resend the full history. | [02](concepts/02_agentic_loop/) |
-| **Tool Runner** | SDK helper (`client.beta.messages.tool_runner` + `@beta_tool`) that runs the loop for your tools. | [02](concepts/02_agentic_loop/) |
+| **Tool Runner** | SDK helper (`client.beta.messages.tool_runner` + `@beta_tool`) that runs the loop for your tools. | [01](concepts/01_api_surfaces/), [02](concepts/02_agentic_loop/) |
+| **`messages.parse`** | One-call structured output: Pydantic `output_format` → validated `parsed_output`. Also on `tool_runner`. | [01](concepts/01_api_surfaces/) |
+| **`messages.stream`** | Same request as `create`, delivered incrementally; `get_final_message()` for the full result. | [01](concepts/01_api_surfaces/) |
+| **Text Completions (legacy)** | `client.completions.create`, Human/Assistant prompt strings. Superseded by Messages; don't use. | [01](concepts/01_api_surfaces/) |
 | **Claude Agent SDK** | Claude Code's harness as a library: built-in tools, subagents, hooks, sessions. You host it. | [02/SDK](concepts/02_agentic_loop/agent_sdk/) |
 | **Claude Managed Agents** | Anthropic hosts the loop *and* a per-session sandbox; versioned agent configs. | [02](concepts/02_agentic_loop/) |
 | **Harness** | Everything around the model: loop, tools, context management, permissions. | [02](concepts/02_agentic_loop/) |

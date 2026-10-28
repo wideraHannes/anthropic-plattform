@@ -94,7 +94,7 @@ def create_app(
         response.headers["Cache-Control"] = "public, max-age=30"
         return response
 
-    def staff_config(token: str) -> dict:
+    def authorized_config(token: str) -> dict:
         try:
             config = load_config(config_path)
         except ConfigError:
@@ -107,7 +107,7 @@ def create_app(
 
     @app.get("/staff/{token}", response_class=HTMLResponse)
     def staff(request: Request, token: str, ok: str | None = None):
-        config = staff_config(token)
+        config = authorized_config(token)
         now = clock()
         last = db.latest_update(db_path)
         last_feedback = db.latest_feedback_ts(db_path)
@@ -133,7 +133,7 @@ def create_app(
 
     @app.post("/staff/{token}/update")
     def update(token: str, action: Annotated[str, Form()]):
-        staff_config(token)
+        authorized_config(token)
         if action not in ACTIONS:
             raise HTTPException(422, "unknown action")
         last = db.latest_update(db_path)
@@ -144,7 +144,7 @@ def create_app(
 
     @app.post("/staff/{token}/feedback")
     def feedback(token: str, verdict: Annotated[str, Form()]):
-        staff_config(token)
+        authorized_config(token)
         if verdict not in db.VERDICTS:
             raise HTTPException(422, "unknown verdict")
         db.add_feedback(db_path, clock(), verdict)

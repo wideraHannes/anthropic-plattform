@@ -8,7 +8,7 @@ A chat agent for an online shop: answers policy questions, verifies customers, l
 
 | File | Role | Change it to adapt the agent |
 |---|---|---|
-| `agent.py` | System prompt, Tool Runner loop with a per-turn `on_tool_call` hook, chat REPL. | Persona, workflow, hooks. |
+| `agent.py` | System prompt, Tool Runner loop with a per-tool-call hook point, chat REPL. | Persona, workflow, hooks. |
 | `tools.py` | 5 `@beta_tool`s with descriptions, structured errors (`ToolError`), **gates** (verify → own order → once → ≤ order amount → ≤ €150), validated handoff. | Your client's actions and policies. |
 | `data.py` | Fake backend (customers, orders, help-center articles). | Real API / DB calls. |
 | `test_tools.py` | Deterministic pytest checks of every gate. No API calls, runs in < 1 s. | Add a test for every new policy rule. |
@@ -41,7 +41,7 @@ uv run python eval.py    # does the agent behave? (API calls)
 1. Delete the `<how_to_work>` block from `SYSTEM`. Which scenarios break? Which still pass because of the gates?
 2. Make the `process_refund` description vague ("Refunds an order"). Re-run the eval.
 3. Add a `cancel_order` tool for `shipped` orders + two scenarios for it.
-4. Turn `on_tool_call` into an approval hook: refunds > €100 need `input("approve? ")`.
+4. Turn the `[tool]` log line in `run_turn` into an approval hook: refunds > €100 need `input("approve? ")`.
 5. Add an LLM-judge check for tone (see [`concepts/06_evals/graders.py`](../../concepts/06_evals/graders.py)).
 
 Guide: <https://platform.claude.com/docs/en/about-claude/use-case-guides/customer-support-chat>

@@ -1,0 +1,5 @@
+{
+  "A-1001": {"customer": "Jane Doe", "item": "Mechanical keyboard", "status": "delivered", "eta": "2026-10-20"},
+  "A-1002": {"customer": "Jane Doe", "item": "USB-C dock", "status": "delayed", "eta": "2026-11-04"},
+  "A-1003": {"customer": "Max Muster", "item": "4K monitor", "status": "shipped", "eta": "2026-10-29"}
+}
