@@ -12,7 +12,7 @@ A chat agent for an online shop: answers policy questions, verifies customers, l
 | `tools.py` | 5 `@beta_tool`s with descriptions, structured errors (`ToolError`), **gates** (verify → own order → once → ≤ order amount → ≤ €150), validated handoff. | Your client's actions and policies. |
 | `data.py` | Fake backend (customers, orders, help-center articles). | Real API / DB calls. |
 | `test_tools.py` | Deterministic pytest checks of every gate. No API calls, runs in < 1 s. | Add a test for every new policy rule. |
-| `eval.py` | 6 scenarios graded on backend state: happy path, someone else's order, over limit → handoff, policy question, prompt injection in order notes, missing identity. | Add a scenario for every bug you find. |
+| `eval.py` | 8 scenarios graded on backend state: happy path, someone else's order, over limit → handoff, policy question, prompt injection in order notes, missing identity, off-topic request, long rambling message. Plus an LLM Likert tone score (1–5) per reply. | Add a scenario for every bug you find. |
 
 ## Run
 
@@ -36,12 +36,14 @@ uv run python eval.py    # does the agent behave? (API calls)
 
 6/6 scenarios passed (re-run on the Tool Runner 2026-10-27: 6/6, 9/9 gate tests); system prompt cached (~18k cache-read tokens over the run). Visible imperfection: replies use **bold** markdown despite "plain text" in the style section — a cheap first thing to fix and re-measure.
 
+**Re-run with edge cases + tone judge (Sonnet 5.5 agent, Opus 5.5 judge, 2026-10-28):** 8/8 scenarios, 9/9 gate tests. Off-topic poem request touched no account data; the long rambling message still led to the correct verified refund. Tone mean 3.9/5, min 3 (the injection case: no apology for the missing item). Off-topic: the agent wrote the poem — passes the state check, but is that what a shop bot should do? A product decision to make explicit in the prompt.
+
 ## Try next (modify → measure → explain)
 
 1. Delete the `<how_to_work>` block from `SYSTEM`. Which scenarios break? Which still pass because of the gates?
 2. Make the `process_refund` description vague ("Refunds an order"). Re-run the eval.
 3. Add a `cancel_order` tool for `shipped` orders + two scenarios for it.
 4. Turn the `[tool]` log line in `run_turn` into an approval hook: refunds > €100 need `input("approve? ")`.
-5. Add an LLM-judge check for tone (see [`concepts/06_evals/graders.py`](../../concepts/06_evals/graders.py)).
+5. Calibrate the tone judge: score 10 replies yourself and compare. Then make a tone floor (e.g. min ≥ 3) a failing check.
 
 Guide: <https://platform.claude.com/docs/en/about-claude/use-case-guides/customer-support-chat>

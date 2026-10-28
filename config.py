@@ -2,7 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 
 import anthropic
-from pydantic import SecretStr
+from pydantic import SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ENV_PATH = Path(__file__).parent / ".env"
@@ -22,6 +22,12 @@ class Settings(BaseSettings):
     model_haiku: str = "claude-haiku-5-5"
     model_opus: str = "claude-opus-5-5"
     default_model: str = "claude-sonnet-5-5"
+    judge_model: str = ""  # grade with a different model than the one that generates; empty → model_opus
+
+    @model_validator(mode="after")
+    def _default_judge(self) -> "Settings":
+        self.judge_model = self.judge_model or self.model_opus
+        return self
 
 
 @lru_cache

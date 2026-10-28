@@ -94,8 +94,16 @@ One line per term. Grouped the way Anthropic talks about them. **Where** points 
 |---|---|---|
 | **Success criteria** | Specific, measurable targets (accuracy, latency, cost, safety) defined *before* building. | [06](concepts/06_evals/) |
 | **Eval dataset** | Fixed inputs from real traffic plus edge and adversarial cases. | [P01](projects/01_ticket_routing/) |
+| **Eval design principles** | Task-specific (incl. edge cases), automated grading, volume over quality. | [06](concepts/06_evals/) |
+| **Edge case** | Irrelevant/missing, overly long, hostile or ambiguous input; tagged and reported separately. | [P01](projects/01_ticket_routing/) |
 | **Code-based grader** | Exact match, regex, schema or state check: cheap and deterministic. | [06](concepts/06_evals/) |
-| **LLM-as-judge** | Model grades against a rubric; reason first, then verdict. | [06](concepts/06_evals/) |
+| **LLM-as-judge** | Model grades against a rubric; reason first, then verdict; a different model than the generator. | [06](concepts/06_evals/) |
+| **Exact match** | Output equals the gold label after normalisation; for categorical tasks. | [P01](projects/01_ticket_routing/) |
+| **Cosine similarity (eval)** | Embedding similarity of answers to paraphrased questions → consistency. | [06](concepts/06_evals/eval_types.ipynb) |
+| **ROUGE-L** | Longest-common-subsequence F1 vs. a reference summary → relevance and order. | [06](concepts/06_evals/eval_types.ipynb) |
+| **Likert / ordinal scale** | LLM grader scores 1–5 against level descriptions (tone, context use). | [P02](projects/02_support_agent/) |
+| **Binary classification (eval)** | LLM grader answers yes/no on a property (PHI leaked? claim supported?). | [P03](projects/03_research_multi_agent/) |
+| **Judge calibration** | Hand-label a sample, check the LLM grader agrees, then scale it. | [06](concepts/06_evals/) |
 | **Outcome vs trajectory** | Grade the final state *and* the path (right tools, right order). | [P02](projects/02_support_agent/) |
 | **Transcript** | Full record of a run; read it to understand *why* a case failed. | [06](concepts/06_evals/) |
 | **pass@k / pass^k** | At least one of k tries succeeds / all k tries succeed (consistency). | — |

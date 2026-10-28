@@ -37,7 +37,7 @@ cd concepts/01_api_surfaces && uv run --with jupyter jupyter lab api_surfaces.ip
 | [03](concepts/03_tool_design/)               | Tool design             | Tools are the agent's UI: descriptions, schemas, structured errors.    |
 | [04](concepts/04_workflows_and_multi_agent/) | Workflows & multi-agent | Chaining, routing, parallel, orchestrator–workers, hub-and-spoke.      |
 | [05](concepts/05_guardrails_and_hooks/)      | Guardrails & hooks      | Determinism ladder: prompt → schema → gate → hook → human.             |
-| [06](concepts/06_evals/)                     | Evals                   | Dataset + grader + number. Outcomes _and_ trajectories.                |
+| [06](concepts/06_evals/)                     | Evals                   | Edge cases, code before LLM grader, six eval types (notebook).         |
 | [07](concepts/07_inference_optimization/)    | Inference optimization  | Caching, batch, effort, model choice, per completed task.              |
 
 ## Projects

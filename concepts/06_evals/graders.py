@@ -4,6 +4,10 @@ Two graders on the same outputs: a code grader and an LLM judge.
 The code grader is cheap, deterministic and blind to meaning — it checks a
 regex. The LLM judge reads a rubric, reasons, and gives a verdict. Watch where
 they disagree: that's exactly where you need the judge (or a human).
+
+The judge follows the develop-tests tips: a detailed rubric, an empirical
+verdict (pass/fail, not prose), reasoning before the verdict (thinking on), and
+a different model than the one that wrote the replies (`settings.judge_model`).
 """
 
 import re
@@ -40,8 +44,9 @@ def code_grader(reply: str) -> bool:
 
 def llm_judge(reply: str) -> Verdict:
     response = client.messages.parse(
-        model=settings.default_model,
-        max_tokens=1024,
+        model=settings.judge_model,
+        max_tokens=16000,
+        thinking={"type": "adaptive"},  # reason before scoring
         output_format=Verdict,
         messages=[
             {

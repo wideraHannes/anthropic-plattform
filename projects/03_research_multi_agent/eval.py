@@ -50,8 +50,9 @@ def normalize(text: str) -> str:
 def judge_brief(brief: str, findings: list) -> list[Claim]:
     evidence = "\n".join(f'- {f.claim} [{f.doc}] "{f.quote}"' for f in findings)
     response = client.messages.parse(
-        model=settings.default_model,
-        max_tokens=4096,
+        model=settings.judge_model,  # not the model that wrote the brief
+        max_tokens=16000,
+        thinking={"type": "adaptive"},
         system=JUDGE_SYSTEM,
         messages=[{"role": "user", "content": f"<findings>\n{evidence}\n</findings>\n\n<brief>\n{brief}\n</brief>"}],
         output_format=Judgement,

@@ -6,11 +6,16 @@ Eval for the ticket router: accuracy, latency and tokens on tickets.json.
 
 Grader: code (exact match on intent and urgency). Read the FAIL lines —
 the reasoning field tells you why the model chose what it chose.
+
+Each ticket has a `tag`: typical traffic, or an edge case the develop-tests
+guide asks for (irrelevant, long, hostile, injection, ambiguous). Accuracy is
+reported per tag, so a prompt can't hide edge-case failures behind an average.
 """
 
 import json
 import sys
 import time
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -31,11 +36,15 @@ def main(prompt: str) -> None:
         results = list(pool.map(lambda t: classify_timed(t, prompt), TICKETS))
 
     intent_ok = urgency_ok = 0
+    tag_total, tag_ok = Counter(), Counter()
     for ticket, response, _ in results:
         got = response.parsed_output
         intent_ok += got.intent == ticket["intent"]
         urgency_ok += got.urgency == ticket["urgency"]
-        if (got.intent, got.urgency) != (ticket["intent"], ticket["urgency"]):
+        both = (got.intent, got.urgency) == (ticket["intent"], ticket["urgency"])
+        tag_total[ticket["tag"]] += 1
+        tag_ok[ticket["tag"]] += both
+        if not both:
             print(f"FAIL {ticket['id']}: expected {ticket['intent']}/{ticket['urgency']}, "
                   f"got {got.intent}/{got.urgency}\n     {ticket['text']}\n     why: {got.reasoning}")
 
@@ -45,6 +54,7 @@ def main(prompt: str) -> None:
     print(f"\n=== prompt: {prompt} ===")
     print(f"intent accuracy : {intent_ok}/{n}  ({intent_ok / n:.0%})")
     print(f"urgency accuracy: {urgency_ok}/{n}  ({urgency_ok / n:.0%})")
+    print("both right, by tag: " + ", ".join(f"{t} {tag_ok[t]}/{tag_total[t]}" for t in tag_total))
     print(f"latency p50/max : {latencies[n // 2]:.2f}s / {latencies[-1]:.2f}s")
     print(f"tokens          : {tokens}")
 

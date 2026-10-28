@@ -41,7 +41,7 @@ uv run python eval.py
 - **Planner sees an index, not the documents** — just-in-time retrieval; its context stays small no matter how big the corpus grows.
 - **Workers are isolated** — each gets exactly one sub-question and its docs; no shared history, no cross-talk.
 - **Findings carry exact quotes** — makes worker faithfulness checkable by *code*, not by another LLM.
-- **LLM judge only where code can't decide** — whether a brief sentence is backed by a finding needs judgement; the judge lists each claim, reasons, then decides (`supported: bool`).
+- **LLM judge only where code can't decide** — whether a brief sentence is backed by a finding needs judgement; the judge (a different model, `settings.judge_model`, thinking on) lists each claim, reasons, then decides (`supported: bool`) — the guide's LLM binary classification.
 - **One gap-review round, bounded** — the lead reads only the workers' open questions and re-delegates what the corpus can still answer (max 3 follow-ups, one round). Coverage gaps are fixed at the split, not in the synthesis prompt.
 - **Synthesizer gets compressed findings**, not worker transcripts — that's the context budget that matters.
 - **Validate model-chosen references** (`sq.docs` filtered against the corpus).
@@ -55,6 +55,8 @@ uv run python eval.py
 
 **With the gap-review round (2026-10-27, one run):** 3 follow-ups → 8 worker calls instead of 5. 42/42 quotes verbatim, 28/30 claims grounded, 4/4 coverage, 6/6 cited. Worker input tokens 4.4k → 6.7k, plus a 1.2k-token reviewer call. The two ungrounded claims are climate facts again (Denmark rarely below −15 °C, Finland often below it): the synthesizer's world knowledge, not a missing worker round. **The review loop buys breadth, not groundedness.** One run each can't separate signal from noise, so run 3–5 times before you claim a difference.
 
+**Judge on a separate model (Sonnet 5.5 system, Opus 5.5 judge with thinking, 2026-10-28):** 56/56 quotes verbatim, 27/28 claims grounded, 4/4 coverage, 6/6 cited. Flagged: "Acme's pilot in Skåne took place in 2025" — a date the findings don't carry.
+
 **Earlier gap (now measured):** the first version's brief said *"Denmark's climate is the mildest of the four Nordic countries"*. That isn't in the corpus; it's the synthesizer's own world knowledge. The old eval only checked **worker** quotes and couldn't see this; the judge now does.
 
 ## Try next
@@ -65,5 +67,6 @@ uv run python eval.py
 2. Give every worker *all* documents. Compare tokens and faithfulness.
 3. Make the review loop iterate (until no follow-ups, max N rounds). Does coverage or groundedness move, and what does it cost?
 4. Replace `corpus/` with 20 real documents from a client domain.
+5. One question is no dataset: add 5 more, including one the corpus can't answer (edge case: missing input) — the brief should say so instead of guessing.
 
 Further reading: <https://www.anthropic.com/engineering/multi-agent-research-system>
